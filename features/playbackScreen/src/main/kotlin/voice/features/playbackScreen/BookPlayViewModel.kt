@@ -98,6 +98,7 @@ class BookPlayViewModel(
 ) {
 
   private val scope = MainScope(dispatcherProvider)
+  private val volumeTitleCache = mutableMapOf<String, String?>()
 
   private val viewEffectChannel = Channel<BookPlayViewEffect>(Channel.UNLIMITED)
   internal val viewEffects: Flow<BookPlayViewEffect> = viewEffectChannel.receiveAsFlow()
@@ -328,16 +329,26 @@ class BookPlayViewModel(
     scope.launch {
       val book = currentBook() ?: return@launch
       // Show the chapter list immediately. Reading metadata from many M4B files can be slow.
-      val items = book.chapters.flatMapIndexed { chapterIndex, chapter ->
-        val previousChapters = book.chapters.take(chapterIndex)
-        chapter.chapterMarks.mapIndexed { markIndex, chapterMark ->
-          BookPlayDialogViewState.SelectChapterDialog.ItemViewState(
-            volume = chapter.id.volumeFolderName(),
-            number = previousChapters.sumOf { it.chapterMarks.count() } + markIndex + 1,
-            name = chapterMark.name ?: "",
-            active = chapterMark == book.currentMark && chapter == book.currentChapter,
-            time = formatTime(previousChapters.sumOf { it.duration } + chapterMark.startMs),
-          )
+      val items = buildList {
+        var chapterNumber = 0
+        var elapsedMs = 0L
+        val currentChapterId = book.currentChapter.id
+        val currentMark = book.currentMark
+        book.chapters.forEach { chapter ->
+          val folder = chapter.id.volumeFolderName()
+          val volumeTitle = folder?.let(volumeTitleCache::get)
+          chapter.chapterMarks.forEach { mark ->
+            chapterNumber++
+            add(BookPlayDialogViewState.SelectChapterDialog.ItemViewState(
+              volume = folder,
+              volumeTitle = volumeTitle,
+              number = chapterNumber,
+              name = mark.name ?: "",
+              active = mark == currentMark && chapter.id == currentChapterId,
+              time = formatTime(elapsedMs + mark.startMs),
+            ))
+          }
+          elapsedMs += chapter.duration
         }
       }
       val initialDialog = BookPlayDialogViewState.SelectChapterDialog(items)
@@ -350,8 +361,11 @@ class BookPlayViewModel(
           val folder = chapter.id.volumeFolderName() ?: return@mapNotNull null
           folder to chapter.id
         }.distinctBy { it.first }
-          .associate { (folder, id) -> folder to id.embeddedTitle(context) }
+          .associate { (folder, id) ->
+            folder to (volumeTitleCache[folder] ?: id.embeddedTitle(context))
+          }
       }
+      volumeTitleCache.putAll(titles)
       if (dialogState.value === initialDialog) {
         dialogState.value = initialDialog.copy(
           items = items.map { item ->
