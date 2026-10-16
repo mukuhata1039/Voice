@@ -60,7 +60,7 @@ internal fun ChapterSheet(
   val expanded = remember(dialogState) {
     mutableStateListOf<String>().apply { if (grouped) add(currentVolume) }
   }
-  val visibleItems = if (grouped) buildList {
+  val visibleItems: List<VolumeRow> = if (grouped) buildList<VolumeRow> {
     groups.forEach { (volume, chapters) ->
       add(VolumeRow.Header(volume))
       if (volume in expanded) chapters.forEach { add(VolumeRow.Chapter(it)) }
