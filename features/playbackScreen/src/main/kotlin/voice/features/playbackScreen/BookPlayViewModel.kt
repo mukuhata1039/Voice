@@ -510,6 +510,10 @@ private fun voice.core.data.ChapterId.embeddedTitle(context: Context): String? {
   } catch (_: Exception) {
     null
   } finally {
-    runCatching { retriever.release() }
+    try {
+      retriever.release()
+    } catch (_: Exception) {
+      // Ignore cleanup failures after attempting to read metadata.
+    }
   }
 }
