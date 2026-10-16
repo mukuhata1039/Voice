@@ -163,6 +163,7 @@ class BookPlayViewModel(
       duration = currentMark.durationMs.milliseconds,
       playedTime = positionInCurrentMark.milliseconds,
       cover = book.content.coverUrl,
+      currentAudioUri = book.currentChapter.id.value,
       skipSilence = book.content.skipSilence,
       playbackSpeed = book.content.playbackSpeed,
       volumeBoostActive = book.content.gain > 0F,
