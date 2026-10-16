@@ -1,0 +1,26 @@
+name: ABVoice APK (Debug)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Prepare Android build
+        uses: ./.github/actions/build_setup
+      - name: Build free debug APK
+        run: ./gradlew :app:assembleFreeDebug
+      - name: Upload installable APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: ABVoice-debug-apk
+          path: app/build/outputs/apk/free/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
