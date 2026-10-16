@@ -327,28 +327,38 @@ class BookPlayViewModel(
   fun onCurrentChapterClick() {
     scope.launch {
       val book = currentBook() ?: return@launch
-      val volumeTitles = withContext(Dispatchers.IO) {
+      // Show the chapter list immediately. Reading metadata from many M4B files can be slow.
+      val items = book.chapters.flatMapIndexed { chapterIndex, chapter ->
+        val previousChapters = book.chapters.take(chapterIndex)
+        chapter.chapterMarks.mapIndexed { markIndex, chapterMark ->
+          BookPlayDialogViewState.SelectChapterDialog.ItemViewState(
+            volume = chapter.id.volumeFolderName(),
+            number = previousChapters.sumOf { it.chapterMarks.count() } + markIndex + 1,
+            name = chapterMark.name ?: "",
+            active = chapterMark == book.currentMark && chapter == book.currentChapter,
+            time = formatTime(previousChapters.sumOf { it.duration } + chapterMark.startMs),
+          )
+        }
+      }
+      val initialDialog = BookPlayDialogViewState.SelectChapterDialog(items)
+      dialogState.value = initialDialog
+
+      // Resolve official volume titles in the background, then replace labels only
+      // if the same chapter sheet is still open.
+      val titles = withContext(Dispatchers.IO) {
         book.chapters.mapNotNull { chapter ->
           val folder = chapter.id.volumeFolderName() ?: return@mapNotNull null
           folder to chapter.id
         }.distinctBy { it.first }
           .associate { (folder, id) -> folder to id.embeddedTitle(context) }
       }
-      dialogState.value = BookPlayDialogViewState.SelectChapterDialog(
-        items = book.chapters.flatMapIndexed { chapterIndex, chapter ->
-          chapter.chapterMarks.mapIndexed { markIndex, chapterMark ->
-            val previousChapters = book.chapters.take(chapterIndex)
-            BookPlayDialogViewState.SelectChapterDialog.ItemViewState(
-              volume = chapter.id.volumeFolderName(),
-              volumeTitle = chapter.id.volumeFolderName()?.let(volumeTitles::get),
-              number = previousChapters.sumOf { it.chapterMarks.count() } + markIndex + 1,
-              name = chapterMark.name ?: "",
-              active = chapterMark == book.currentMark && chapter == book.currentChapter,
-              time = formatTime(previousChapters.sumOf { it.duration } + chapterMark.startMs),
-            )
-          }
-        },
-      )
+      if (dialogState.value === initialDialog) {
+        dialogState.value = initialDialog.copy(
+          items = items.map { item ->
+            item.copy(volumeTitle = item.volume?.let(titles::get))
+          },
+        )
+      }
     }
   }
 
