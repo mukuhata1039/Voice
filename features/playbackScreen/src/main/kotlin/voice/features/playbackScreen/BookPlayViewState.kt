@@ -15,6 +15,7 @@ data class BookPlayViewState(
   val duration: Duration,
   val playing: Boolean,
   val cover: String?,
+  val currentAudioUri: String? = null,
   val skipSilence: Boolean,
   val playbackSpeed: Float,
   val volumeBoostActive: Boolean,
