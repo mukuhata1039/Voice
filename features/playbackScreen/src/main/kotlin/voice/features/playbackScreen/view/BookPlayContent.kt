@@ -76,7 +76,7 @@ internal fun BookPlayContent(
 ) {
   val entrance = rememberEntranceState()
   val cover: @Composable (Modifier) -> Unit = { modifier ->
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+    Box(modifier = modifier, contentAlignment = Alignment.BottomCenter) {
       PlaybackCover(
         bookId = bookId,
         cover = viewState.cover,
@@ -224,7 +224,7 @@ internal fun BookPlayContent(
         cover(
           Modifier
             .fillMaxSize()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 2.dp),
         )
       },
       control = control,
@@ -243,10 +243,10 @@ private enum class Control(
 ) {
   Title(0.dp, 0.dp),
   BookProgress(12.dp, 12.dp),
-  Chapter(16.dp, 12.dp),
+  Chapter(12.dp, 8.dp),
   Seek(12.dp, 12.dp),
   Transport(8.dp, 8.dp),
-  Toolbar(20.dp, 12.dp),
+  Toolbar(12.dp, 8.dp),
 }
 
 /** When the height runs out, the controls give way from the end of this list. */
@@ -290,7 +290,7 @@ private fun ControlsLayout(
       .mapValues { it.value.measure(Constraints.fixedWidth(width)) }
 
     fun playButtonSize(compact: Boolean): Int = (if (compact) COMPACT_PLAY_BUTTON else REGULAR_PLAY_BUTTON).roundToPx()
-    fun verticalPadding(compact: Boolean): Int = (if (compact) 8.dp else 16.dp).roundToPx()
+    fun verticalPadding(compact: Boolean): Int = 8.dp.roundToPx()
     fun gapAbove(
       control: Control,
       compact: Boolean,
