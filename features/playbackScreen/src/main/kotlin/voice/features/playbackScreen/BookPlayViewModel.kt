@@ -356,13 +356,14 @@ class BookPlayViewModel(
 
       // Resolve official volume titles in the background, then replace labels only
       // if the same chapter sheet is still open.
+      val cachedTitles = volumeTitleCache.toMap()
       val titles = withContext(Dispatchers.IO) {
         book.chapters.mapNotNull { chapter ->
           val folder = chapter.id.volumeFolderName() ?: return@mapNotNull null
           folder to chapter.id
         }.distinctBy { it.first }
           .associate { (folder, id) ->
-            folder to (volumeTitleCache[folder] ?: id.embeddedTitle(context))
+            folder to (if (cachedTitles.containsKey(folder)) cachedTitles[folder] else id.embeddedTitle(context))
           }
       }
       volumeTitleCache.putAll(titles)
