@@ -81,6 +81,7 @@ internal sealed interface BookPlayDialogViewState {
   data class SelectChapterDialog(val items: List<ItemViewState>) : BookPlayDialogViewState {
 
     data class ItemViewState(
+      val volume: String? = null,
       val number: Int,
       val name: String,
       val active: Boolean,
