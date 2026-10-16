@@ -1,5 +1,6 @@
 package voice.features.playbackScreen
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
@@ -325,6 +326,7 @@ class BookPlayViewModel(
           chapter.chapterMarks.mapIndexed { markIndex, chapterMark ->
             val previousChapters = book.chapters.take(chapterIndex)
             BookPlayDialogViewState.SelectChapterDialog.ItemViewState(
+              volume = chapter.id.volumeFolderName(),
               number = previousChapters.sumOf { it.chapterMarks.count() } + markIndex + 1,
               name = chapterMark.name ?: "",
               active = chapterMark == book.currentMark && chapter == book.currentChapter,
@@ -470,4 +472,13 @@ private fun SleepTimerState.toViewState(): BookPlayViewState.SleepTimerViewState
   SleepTimerState.Disabled -> BookPlayViewState.SleepTimerViewState.Disabled
   is SleepTimerState.Enabled.WithDuration -> BookPlayViewState.SleepTimerViewState.Enabled.WithDuration(this.leftDuration)
   SleepTimerState.Enabled.WithEndOfChapter -> BookPlayViewState.SleepTimerViewState.Enabled.WithEndOfChapter
+}
+
+/** Reads a containing volume folder from document IDs without changing stored chapter IDs. */
+private fun voice.core.data.ChapterId.volumeFolderName(): String? {
+  val uri = Uri.parse(value)
+  val documentId = uri.lastPathSegment?.let(Uri::decode) ?: return null
+  val normalized = documentId.replace('\\', '/')
+  val parent = normalized.substringBeforeLast('/', missingDelimiterValue = "")
+  return parent.substringAfterLast('/').takeIf { it.isNotBlank() }
 }
