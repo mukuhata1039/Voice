@@ -6,9 +6,11 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -76,6 +78,8 @@ internal fun ChapterSheet(
       enabledValues = setOf(Hidden, Expanded),
     ),
   ) {
+    // Keep the sheet height stable when volumes are collapsed or expanded.
+    Column(modifier = Modifier.fillMaxHeight(0.9F)) {
     Row(
       modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
       verticalAlignment = Alignment.CenterVertically,
@@ -101,6 +105,7 @@ internal fun ChapterSheet(
     }
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = (activeVisibleIndex - 1).coerceAtLeast(0))
     LazyColumn(
+      modifier = Modifier.weight(1F),
       state = listState,
       contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
       verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -142,6 +147,7 @@ internal fun ChapterSheet(
           )
         }
       }
+    }
     }
   }
 }
