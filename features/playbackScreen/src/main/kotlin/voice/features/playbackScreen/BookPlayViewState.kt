@@ -15,6 +15,7 @@ data class BookPlayViewState(
   val duration: Duration,
   val playing: Boolean,
   val cover: String?,
+  val currentAudioUri: String? = null,
   val skipSilence: Boolean,
   val playbackSpeed: Float,
   val volumeBoostActive: Boolean,
@@ -81,6 +82,7 @@ internal sealed interface BookPlayDialogViewState {
   data class SelectChapterDialog(val items: List<ItemViewState>) : BookPlayDialogViewState {
 
     data class ItemViewState(
+      val volume: String? = null,
       val number: Int,
       val name: String,
       val active: Boolean,

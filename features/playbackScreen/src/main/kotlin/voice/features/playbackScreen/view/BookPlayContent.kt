@@ -80,6 +80,7 @@ internal fun BookPlayContent(
       PlaybackCover(
         bookId = bookId,
         cover = viewState.cover,
+        currentAudioUri = viewState.currentAudioUri,
         playing = viewState.playing,
         swipeEnabled = viewState.showPreviousNextButtons,
         onPlayPause = onPlayClick,
