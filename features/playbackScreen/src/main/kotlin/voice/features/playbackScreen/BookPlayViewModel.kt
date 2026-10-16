@@ -1,6 +1,8 @@
 package voice.features.playbackScreen
 
 import android.net.Uri
+import android.content.Context
+import android.media.MediaMetadataRetriever
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
@@ -17,6 +19,8 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import voice.core.audiobookshelf.ServerLibrary
 import voice.core.common.DispatcherProvider
 import voice.core.common.MainScope
@@ -63,6 +67,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @AssistedInject
 class BookPlayViewModel(
+  private val context: Context,
   private val bookRepository: BookRepository,
   private val currentBookResolver: CurrentBookResolver,
   private val player: PlayerController,
@@ -322,12 +327,20 @@ class BookPlayViewModel(
   fun onCurrentChapterClick() {
     scope.launch {
       val book = currentBook() ?: return@launch
+      val volumeTitles = withContext(Dispatchers.IO) {
+        book.chapters.mapNotNull { chapter ->
+          val folder = chapter.id.volumeFolderName() ?: return@mapNotNull null
+          folder to chapter.id.embeddedTitle(context)
+        }.groupBy({ it.first }, { it.second })
+          .mapValues { (_, titles) -> titles.firstOrNull { !it.isNullOrBlank() } }
+      }
       dialogState.value = BookPlayDialogViewState.SelectChapterDialog(
         items = book.chapters.flatMapIndexed { chapterIndex, chapter ->
           chapter.chapterMarks.mapIndexed { markIndex, chapterMark ->
             val previousChapters = book.chapters.take(chapterIndex)
             BookPlayDialogViewState.SelectChapterDialog.ItemViewState(
               volume = chapter.id.volumeFolderName(),
+              volumeTitle = chapter.id.volumeFolderName()?.let(volumeTitles::get),
               number = previousChapters.sumOf { it.chapterMarks.count() } + markIndex + 1,
               name = chapterMark.name ?: "",
               active = chapterMark == book.currentMark && chapter == book.currentChapter,
@@ -482,4 +495,21 @@ private fun voice.core.data.ChapterId.volumeFolderName(): String? {
   val normalized = documentId.replace('\\', '/')
   val parent = normalized.substringBeforeLast('/', missingDelimiterValue = "")
   return parent.substringAfterLast('/').takeIf { it.isNotBlank() }
+}
+
+/** Display metadata only: the original folder name remains the grouping key. */
+private fun voice.core.data.ChapterId.embeddedTitle(context: Context): String? {
+  val uri = Uri.parse(value)
+  if (uri.scheme != "content" && uri.scheme != "file") return null
+  val retriever = MediaMetadataRetriever()
+  return try {
+    retriever.setDataSource(context, uri)
+    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+      ?.trim()
+      ?.takeIf { it.isNotBlank() }
+  } catch (_: Exception) {
+    null
+  } finally {
+    runCatching { retriever.release() }
+  }
 }
