@@ -2,6 +2,7 @@
 
 package voice.features.playbackScreen
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -40,9 +42,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import voice.core.ui.NowPlayingBars
 import voice.core.strings.R as StringsR
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun ChapterSheet(
   dialogState: BookPlayDialogViewState.SelectChapterDialog,
@@ -103,29 +105,40 @@ internal fun ChapterSheet(
       contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
       verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-      itemsIndexed(visibleItems, key = { _, row -> when(row) {
-        is VolumeRow.Header -> "volume:${row.title}"
-        is VolumeRow.Chapter -> "chapter:${row.item.number}"
-      } }) { _, row ->
-        when(row) {
-          is VolumeRow.Header -> Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = if (row.title == currentVolume) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
-            shape = RoundedCornerShape(12.dp),
-            onClick = { if (row.title in expanded) expanded.remove(row.title) else expanded.add(row.title) },
-          ) {
-            Text(
-              text = "${if (row.title in expanded) "▼" else "▶"}  ${row.title}${if (row.title == currentVolume) "  ●" else ""}",
-              modifier = Modifier.padding(16.dp),
-              style = MaterialTheme.typography.titleMedium,
-            )
+      if (grouped) {
+        groups.forEach { (volume, chapters) ->
+          stickyHeader(key = "volume:$volume") {
+            Surface(
+              modifier = Modifier.fillMaxWidth(),
+              color = if (volume == currentVolume) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+              shape = RoundedCornerShape(12.dp),
+              onClick = { if (volume in expanded) expanded.remove(volume) else expanded.add(volume) },
+            ) {
+              Text(
+                text = "${if (volume in expanded) "▼" else "▶"}  ${chapters.firstOrNull()?.volumeTitle ?: volume}${if (volume == currentVolume) "  ●" else ""}",
+                modifier = Modifier.padding(16.dp),
+                style = MaterialTheme.typography.titleMedium,
+              )
+            }
           }
-          is VolumeRow.Chapter -> ChapterItem(
-            chapter = row.item,
-            played = selectedIndex >= 0 && row.item.number < items[selectedIndex].number,
-            playing = playing,
+          if (volume in expanded) {
+            items(chapters, key = { "chapter:${it.number}" }) { chapter ->
+              ChapterItem(
+                chapter = chapter,
+                played = selectedIndex >= 0 && chapter.number < items[selectedIndex].number,
+                shape = RoundedCornerShape(8.dp),
+                onClick = { onChapterClick(chapter.number) },
+              )
+            }
+          }
+        }
+      } else {
+        itemsIndexed(items, key = { _, chapter -> "chapter:${chapter.number}" }) { _, chapter ->
+          ChapterItem(
+            chapter = chapter,
+            played = selectedIndex >= 0 && chapter.number < items[selectedIndex].number,
             shape = RoundedCornerShape(8.dp),
-            onClick = { onChapterClick(row.item.number) },
+            onClick = { onChapterClick(chapter.number) },
           )
         }
       }
@@ -137,7 +150,6 @@ internal fun ChapterSheet(
 private fun ChapterItem(
   chapter: BookPlayDialogViewState.SelectChapterDialog.ItemViewState,
   played: Boolean,
-  playing: Boolean,
   shape: RoundedCornerShape,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
@@ -169,15 +181,11 @@ private fun ChapterItem(
           ),
         contentAlignment = Alignment.Center,
       ) {
-        if (chapter.active) {
-          NowPlayingBars(playing = playing, color = colors.onPrimary)
-        } else {
-          Text(
-            text = chapter.number.toString(),
-            style = MaterialTheme.typography.labelLargeEmphasized,
-            color = colors.onSecondaryContainer,
-          )
-        }
+        Text(
+          text = chapter.number.toString(),
+          style = MaterialTheme.typography.labelLargeEmphasized,
+          color = if (chapter.active) colors.onPrimary else colors.onSecondaryContainer,
+        )
       }
       Spacer(Modifier.width(16.dp))
       Text(
