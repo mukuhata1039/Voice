@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.datastore.core.DataStore
@@ -98,7 +99,7 @@ class BookPlayViewModel(
 ) {
 
   private val scope = MainScope(dispatcherProvider)
-  private val volumeTitleCache = mutableMapOf<String, String?>()
+  private val volumeTitleCache = mutableStateMapOf<String, String?>()
   // Prefetch volume metadata on opening the playback screen, not on opening its chapter sheet.
   private val volumeTitlePreload = scope.launch {
     currentBook()?.let { loadVolumeTitles(it) }
@@ -166,7 +167,7 @@ class BookPlayViewModel(
     return BookPlayViewState(
       sleepTimerState = sleepTime.toViewState(),
       playing = isPlaying,
-      title = book.content.name,
+      title = book.currentChapter.id.volumeFolderName()?.let { volumeTitleCache[it] } ?: book.content.name,
       author = book.content.metadata.author,
       showPreviousNextButtons = hasMoreThanOneChapter,
       chapterName = currentMark.name.takeIf { hasMoreThanOneChapter },
