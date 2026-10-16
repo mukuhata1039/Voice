@@ -59,7 +59,7 @@ internal fun ChapterSheet(
   val grouped = distinctVolumes.size > 1
   val groups = if (grouped) items.groupBy { it.volume.orEmpty() } else emptyMap()
   val currentVolume = items.getOrNull(selectedIndex)?.volume.orEmpty()
-  val expanded = remember(dialogState) {
+  val expanded = remember(currentVolume, grouped) {
     mutableStateListOf<String>().apply { if (grouped) add(currentVolume) }
   }
   val visibleItems: List<VolumeRow> = if (grouped) buildList<VolumeRow> {
