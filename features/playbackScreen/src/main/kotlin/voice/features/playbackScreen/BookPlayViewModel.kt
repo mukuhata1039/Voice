@@ -330,9 +330,9 @@ class BookPlayViewModel(
       val volumeTitles = withContext(Dispatchers.IO) {
         book.chapters.mapNotNull { chapter ->
           val folder = chapter.id.volumeFolderName() ?: return@mapNotNull null
-          folder to chapter.id.embeddedTitle(context)
-        }.groupBy({ it.first }, { it.second })
-          .mapValues { (_, titles) -> titles.firstOrNull { !it.isNullOrBlank() } }
+          folder to chapter.id
+        }.distinctBy { it.first }
+          .associate { (folder, id) -> folder to id.embeddedTitle(context) }
       }
       dialogState.value = BookPlayDialogViewState.SelectChapterDialog(
         items = book.chapters.flatMapIndexed { chapterIndex, chapter ->
