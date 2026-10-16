@@ -8,6 +8,12 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
+import android.net.Uri
+import android.util.LruCache
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -25,6 +31,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -33,8 +40,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
@@ -47,6 +56,8 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import voice.core.data.BookId
 import voice.core.ui.icons.VoiceIcons
 import voice.core.ui.rememberFullSizeCoverRequest
@@ -63,6 +74,7 @@ private const val SWIPE_THRESHOLD = 0.28F
 internal fun PlaybackCover(
   bookId: BookId,
   cover: String?,
+  currentAudioUri: String?,
   playing: Boolean,
   swipeEnabled: Boolean,
   onPlayPause: () -> Unit,
@@ -71,6 +83,27 @@ internal fun PlaybackCover(
   modifier: Modifier = Modifier,
 ) {
   val scope = rememberCoroutineScope()
+  val context = LocalContext.current
+  // Only the playback screen uses per-file artwork; library covers are unchanged.
+  val volumeBitmap by produceState<Bitmap?>(initialValue = null, key1 = currentAudioUri) {
+    value = if (currentAudioUri == null) null else withContext(Dispatchers.IO) {
+      synchronized(volumeCoverCache) {
+        volumeCoverCache.get(currentAudioUri)
+      } ?: runCatching {
+        val retriever = MediaMetadataRetriever()
+        try {
+          retriever.setDataSource(context, Uri.parse(currentAudioUri))
+          retriever.embeddedPicture?.let { bytes ->
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+          }
+        } finally {
+          retriever.release()
+        }
+      }.getOrNull()?.also { bitmap ->
+        synchronized(volumeCoverCache) { volumeCoverCache.put(currentAudioUri, bitmap) }
+      }
+    }
+  }
   val haptics = LocalHapticFeedback.current
   val scale by animateFloatAsState(
     targetValue = if (playing) 1F else 0.86F,
@@ -164,18 +197,28 @@ internal fun PlaybackCover(
         }
       },
   ) {
-    AsyncImage(
-      modifier = Modifier
-        .fillMaxSize()
-        .sharedCoverElementModifier(bookId)
-        // the glow is part of the shared content so it travels with the cover
-        .shadow(elevation = elevation, shape = shape, ambientColor = glow, spotColor = glow)
-        .clip(shape),
-      contentScale = ContentScale.Crop,
-      model = rememberFullSizeCoverRequest(cover),
-      error = painterResource(id = UiR.drawable.album_art),
-      contentDescription = stringResource(id = StringsR.string.cover_title),
-    )
+    val imageModifier = Modifier
+      .fillMaxSize()
+      .sharedCoverElementModifier(bookId)
+      // the glow is part of the shared content so it travels with the cover
+      .shadow(elevation = elevation, shape = shape, ambientColor = glow, spotColor = glow)
+      .clip(shape)
+    if (volumeBitmap != null) {
+      Image(
+        modifier = imageModifier,
+        bitmap = volumeBitmap!!.asImageBitmap(),
+        contentScale = ContentScale.Crop,
+        contentDescription = stringResource(id = StringsR.string.cover_title),
+      )
+    } else {
+      AsyncImage(
+        modifier = imageModifier,
+        contentScale = ContentScale.Crop,
+        model = rememberFullSizeCoverRequest(cover),
+        error = painterResource(id = UiR.drawable.album_art),
+        contentDescription = stringResource(id = StringsR.string.cover_title),
+      )
+    }
     if (pop.value < 1F) {
       Box(
         modifier = Modifier
@@ -228,4 +271,9 @@ private data class PercentCornerSize(private val percent: Float) : CornerSize {
     shapeSize: Size,
     density: Density,
   ): Float = shapeSize.minDimension * percent / 100F
+}
+
+// Bound the memory occupied by decoded artwork across volume switches.
+private val volumeCoverCache = object : LruCache<String, Bitmap>(8 * 1024 * 1024) {
+  override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount
 }
