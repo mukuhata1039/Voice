@@ -39,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -115,7 +116,7 @@ internal fun ChapterSheet(
           stickyHeader(key = "volume:$volume") {
             Surface(
               modifier = Modifier.fillMaxWidth(),
-              color = if (volume == currentVolume) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45F) else MaterialTheme.colorScheme.surfaceContainer,
+              color = if (volume == currentVolume) lerp(MaterialTheme.colorScheme.surfaceContainer, MaterialTheme.colorScheme.primaryContainer, 0.45F) else MaterialTheme.colorScheme.surfaceContainer,
               shape = RoundedCornerShape(12.dp),
               onClick = { if (volume in expanded) expanded.remove(volume) else expanded.add(volume) },
             ) {
