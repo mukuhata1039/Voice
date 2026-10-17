@@ -133,9 +133,9 @@ internal fun SeekSection(
         targetValue = if (dragging) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         label = "elapsedColor",
       )
-      RollingText(
+      Text(
         text = formatTime(shownTime.inWholeMilliseconds, duration.inWholeMilliseconds),
-        style = MaterialTheme.typography.labelLargeEmphasized,
+        style = MaterialTheme.typography.labelLargeEmphasized.copy(fontFeatureSettings = "tnum"),
         color = elapsedColor,
       )
       // the pill is a bit taller than the labels, it may overlap the space around the row
@@ -162,7 +162,7 @@ internal fun SeekSection(
           )
         }
       }
-      RollingText(
+      Text(
         modifier = Modifier
           .clip(RoundedCornerShape(8.dp))
           .clickable { showRemaining = !showRemaining }
@@ -172,7 +172,7 @@ internal fun SeekSection(
         } else {
           formatTime(duration.inWholeMilliseconds, duration.inWholeMilliseconds)
         },
-        style = MaterialTheme.typography.labelLarge,
+        style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
