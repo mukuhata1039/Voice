@@ -43,12 +43,9 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -66,11 +63,8 @@ import kotlinx.coroutines.delay
 import voice.core.ui.formatTime
 import voice.core.ui.icons.VoiceIcons
 import voice.features.playbackScreen.BookPlayViewState
-import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.min
 import kotlin.math.roundToInt
-import kotlin.math.sin
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import voice.core.strings.R as StringsR
@@ -199,11 +193,6 @@ private fun WavySeekBar(
 ) {
   val colors = MaterialTheme.colorScheme
   val haptics = LocalHapticFeedback.current
-  val amplitude by animateFloatAsState(
-    targetValue = if (wavy) 1F else 0F,
-    animationSpec = spring(stiffness = Spring.StiffnessVeryLow),
-    label = "waveAmplitude",
-  )
   val thumbWidth by animateDpAsState(
     targetValue = if (dragging) 3.dp else 5.dp,
     label = "thumbWidth",
@@ -265,13 +254,9 @@ private fun WavySeekBar(
             )
           }
           .drawWithCache {
-            val wavePath = Path()
             onDrawBehind {
               drawWavyTrack(
-                path = wavePath,
                 fraction = currentFraction,
-                amplitudeFactor = amplitude,
-                phase = clock() * 2F * PI.toFloat() * 0.6F,
                 thumbWidth = thumbWidth.toPx(),
                 thumbHeight = thumbHeight.toPx(),
                 activeColor = colors.primary,
@@ -313,10 +298,7 @@ private fun WavySeekBar(
 }
 
 private fun DrawScope.drawWavyTrack(
-  path: Path,
   fraction: Float,
-  amplitudeFactor: Float,
-  phase: Float,
   thumbWidth: Float,
   thumbHeight: Float,
   activeColor: Color,
@@ -328,24 +310,14 @@ private fun DrawScope.drawWavyTrack(
   val centerY = size.height / 2
   val end = size.width - inset
   val thumbX = inset + (end - inset) * fraction
-  val amplitude = 3.5.dp.toPx() * amplitudeFactor
-  val wavelength = 30.dp.toPx()
-  val step = 1.5.dp.toPx()
-
   val activeEnd = thumbX - thumbWidth / 2 - gap
   if (activeEnd > inset) {
-    path.reset()
-    var x = inset
-    path.moveTo(x, centerY + amplitude * sin(-phase))
-    while (x < activeEnd) {
-      x = min(x + step, activeEnd)
-      val angle = (x - inset) / wavelength * 2F * PI.toFloat() - phase
-      path.lineTo(x, centerY + amplitude * sin(angle))
-    }
-    drawPath(
-      path = path,
+    drawLine(
       color = activeColor,
-      style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round),
+      start = Offset(inset, centerY),
+      end = Offset(activeEnd, centerY),
+      strokeWidth = strokeWidth,
+      cap = StrokeCap.Round,
     )
   }
 
