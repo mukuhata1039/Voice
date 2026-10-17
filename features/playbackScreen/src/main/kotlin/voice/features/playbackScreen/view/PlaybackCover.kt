@@ -106,7 +106,7 @@ internal fun PlaybackCover(
   }
   val haptics = LocalHapticFeedback.current
   val scale by animateFloatAsState(
-    targetValue = if (playing) 1F else 0.86F,
+    targetValue = 1F,
     animationSpec = spring(dampingRatio = 0.55F, stiffness = Spring.StiffnessLow),
     label = "coverScale",
   )

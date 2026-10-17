@@ -1,10 +1,13 @@
 package voice.features.playbackScreen
 
 import android.net.Uri
+import android.content.Context
+import android.media.MediaMetadataRetriever
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.datastore.core.DataStore
@@ -17,6 +20,8 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import voice.core.audiobookshelf.ServerLibrary
 import voice.core.common.DispatcherProvider
 import voice.core.common.MainScope
@@ -63,6 +68,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @AssistedInject
 class BookPlayViewModel(
+  private val context: Context,
   private val bookRepository: BookRepository,
   private val currentBookResolver: CurrentBookResolver,
   private val player: PlayerController,
@@ -93,6 +99,11 @@ class BookPlayViewModel(
 ) {
 
   private val scope = MainScope(dispatcherProvider)
+  private val volumeTitleCache = mutableStateMapOf<String, String?>()
+  // Prefetch volume metadata on opening the playback screen, not on opening its chapter sheet.
+  private val volumeTitlePreload = scope.launch {
+    currentBook()?.let { loadVolumeTitles(it) }
+  }
 
   private val viewEffectChannel = Channel<BookPlayViewEffect>(Channel.UNLIMITED)
   internal val viewEffects: Flow<BookPlayViewEffect> = viewEffectChannel.receiveAsFlow()
@@ -156,7 +167,7 @@ class BookPlayViewModel(
     return BookPlayViewState(
       sleepTimerState = sleepTime.toViewState(),
       playing = isPlaying,
-      title = book.content.name,
+      title = book.currentChapter.id.volumeFolderName()?.let { volumeTitleCache[it] } ?: book.content.name,
       author = book.content.metadata.author,
       showPreviousNextButtons = hasMoreThanOneChapter,
       chapterName = currentMark.name.takeIf { hasMoreThanOneChapter },
@@ -322,21 +333,47 @@ class BookPlayViewModel(
   fun onCurrentChapterClick() {
     scope.launch {
       val book = currentBook() ?: return@launch
-      dialogState.value = BookPlayDialogViewState.SelectChapterDialog(
-        items = book.chapters.flatMapIndexed { chapterIndex, chapter ->
-          chapter.chapterMarks.mapIndexed { markIndex, chapterMark ->
-            val previousChapters = book.chapters.take(chapterIndex)
-            BookPlayDialogViewState.SelectChapterDialog.ItemViewState(
-              volume = chapter.id.volumeFolderName(),
-              number = previousChapters.sumOf { it.chapterMarks.count() } + markIndex + 1,
-              name = chapterMark.name ?: "",
-              active = chapterMark == book.currentMark && chapter == book.currentChapter,
-              time = formatTime(previousChapters.sumOf { it.duration } + chapterMark.startMs),
-            )
+      // Never show placeholder folder names before the embedded titles arrive.
+      // Most opens use the in-memory titles loaded when the playback screen opened.
+      volumeTitlePreload.join()
+      loadVolumeTitles(book)
+      val items = buildList {
+        var chapterNumber = 0
+        var elapsedMs = 0L
+        val currentChapterId = book.currentChapter.id
+        val currentMark = book.currentMark
+        book.chapters.forEach { chapter ->
+          val folder = chapter.id.volumeFolderName()
+          val volumeTitle = folder?.let(volumeTitleCache::get)
+          chapter.chapterMarks.forEach { mark ->
+            chapterNumber++
+            add(BookPlayDialogViewState.SelectChapterDialog.ItemViewState(
+              volume = folder,
+              volumeTitle = volumeTitle,
+              number = chapterNumber,
+              name = mark.name ?: "",
+              active = mark == currentMark && chapter.id == currentChapterId,
+              time = formatTime(elapsedMs + mark.startMs),
+            ))
           }
-        },
-      )
+          elapsedMs += chapter.duration
+        }
+      }
+      dialogState.value = BookPlayDialogViewState.SelectChapterDialog(items)
     }
+  }
+
+  private suspend fun loadVolumeTitles(book: Book) {
+    val missingVolumes = book.chapters.mapNotNull { chapter ->
+      val folder = chapter.id.volumeFolderName() ?: return@mapNotNull null
+      folder to chapter.id
+    }.distinctBy { it.first }.filterNot { (folder, _) -> volumeTitleCache.containsKey(folder) }
+    if (missingVolumes.isEmpty()) return
+
+    val titles = withContext(Dispatchers.IO) {
+      missingVolumes.associate { (folder, id) -> folder to id.embeddedTitle(context) }
+    }
+    volumeTitleCache.putAll(titles)
   }
 
   fun onChapterClick(number: Int) {
@@ -482,4 +519,25 @@ private fun voice.core.data.ChapterId.volumeFolderName(): String? {
   val normalized = documentId.replace('\\', '/')
   val parent = normalized.substringBeforeLast('/', missingDelimiterValue = "")
   return parent.substringAfterLast('/').takeIf { it.isNotBlank() }
+}
+
+/** Display metadata only: the original folder name remains the grouping key. */
+private fun voice.core.data.ChapterId.embeddedTitle(context: Context): String? {
+  val uri = Uri.parse(value)
+  if (uri.scheme != "content" && uri.scheme != "file") return null
+  val retriever = MediaMetadataRetriever()
+  return try {
+    retriever.setDataSource(context, uri)
+    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+      ?.trim()
+      ?.takeIf { it.isNotBlank() }
+  } catch (_: Exception) {
+    null
+  } finally {
+    try {
+      retriever.release()
+    } catch (_: Exception) {
+      // Ignore cleanup failures after attempting to read metadata.
+    }
+  }
 }
