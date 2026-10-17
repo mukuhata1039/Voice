@@ -76,6 +76,7 @@ private val HorizontalInset = 12.dp
  * or grabbed. Dragging pops up a bubble with the target time. Tap the right label to toggle
  * between remaining and total time. After a big jump, a pill between the labels offers the way back.
  */
+@Suppress("UNUSED_PARAMETER")
 @Composable
 internal fun SeekSection(
   playedTime: Duration,
@@ -112,9 +113,7 @@ internal fun SeekSection(
   Column(modifier = modifier) {
     WavySeekBar(
       fraction = shownFraction,
-      wavy = playing && !dragging,
       dragging = dragging,
-      clock = clock,
       bubbleText = formatTime(shownTime.inWholeMilliseconds, duration.inWholeMilliseconds),
       onDrag = { dragFraction = it },
       onSeek = { fraction ->
@@ -183,9 +182,7 @@ internal fun SeekSection(
 @Composable
 private fun WavySeekBar(
   fraction: Float,
-  wavy: Boolean,
   dragging: Boolean,
-  clock: () -> Float,
   bubbleText: String,
   onDrag: (Float) -> Unit,
   onSeek: (Float) -> Unit,
