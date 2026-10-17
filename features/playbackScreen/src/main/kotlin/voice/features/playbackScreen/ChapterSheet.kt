@@ -115,7 +115,7 @@ internal fun ChapterSheet(
           stickyHeader(key = "volume:$volume") {
             Surface(
               modifier = Modifier.fillMaxWidth(),
-              color = if (volume == currentVolume) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+              color = if (volume == currentVolume) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45F) else MaterialTheme.colorScheme.surfaceContainer,
               shape = RoundedCornerShape(12.dp),
               onClick = { if (volume in expanded) expanded.remove(volume) else expanded.add(volume) },
             ) {
