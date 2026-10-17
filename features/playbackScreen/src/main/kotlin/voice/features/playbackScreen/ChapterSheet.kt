@@ -120,7 +120,7 @@ internal fun ChapterSheet(
               onClick = { if (volume in expanded) expanded.remove(volume) else expanded.add(volume) },
             ) {
               Text(
-                text = "${if (volume in expanded) "▼" else "▶"}  ${chapters.firstOrNull()?.volumeTitle ?: volume}${if (volume == currentVolume) "  ●" else ""}",
+                text = "${if (volume in expanded) "▼" else "▶"}  ${chapters.firstOrNull()?.volumeTitle ?: volume}",
                 modifier = Modifier.padding(16.dp),
                 style = MaterialTheme.typography.titleMedium,
               )
