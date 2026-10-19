@@ -182,6 +182,7 @@ class BookPlayViewModel(
       chapterCount = chapterCount,
       bookPlayedTime = book.position.coerceIn(0L, book.duration).milliseconds,
       bookDuration = book.duration.milliseconds,
+      volumeRemainingTime = book.volumeRemainingTime(),
       chapterSegments = book.chapterSegments(),
       skipSeconds = skipSeconds,
       jumpBack = lastJump?.let { jumpBackViewState(book, it, chapterNumber) },
@@ -498,6 +499,19 @@ class BookPlayViewModel(
 }
 
 private const val DEFAULT_SKIP_SECONDS = 20
+
+/** Remaining raw audio time in the current volume folder, not in the entire series. */
+private fun Book.volumeRemainingTime(): Duration? {
+  val folder = currentChapter.id.volumeFolderName() ?: return null
+  if (chapters.none { it.id.volumeFolderName() != folder }) return null
+  val index = content.currentChapterIndex
+  var remaining = (chapters[index].duration - content.positionInChapter).coerceAtLeast(0L)
+  for (next in chapters.drop(index + 1)) {
+    if (next.id.volumeFolderName() != folder) break
+    remaining += next.duration
+  }
+  return remaining.milliseconds
+}
 
 private fun Book.chapterSegments(): List<Float> {
   if (duration <= 0L) return emptyList()
