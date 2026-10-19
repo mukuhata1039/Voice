@@ -7,6 +7,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -363,5 +364,55 @@ private fun OfflinePill(modifier: Modifier = Modifier) {
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       maxLines = 1,
     )
+  }
+}
+
+/**
+ * Read-only progress for the current volume. Uses the chapter seek track's
+ * exact geometry without pointer handlers or seeking.
+ */
+@Composable
+internal fun VolumeProgressSection(
+  playedTime: Duration,
+  duration: Duration,
+  modifier: Modifier = Modifier,
+) {
+  val colors = MaterialTheme.colorScheme
+  val fraction = (playedTime / duration).toFloat().coerceIn(0F, 1F)
+  Column(modifier = modifier) {
+    Text(
+      text = "巻",
+      style = MaterialTheme.typography.labelMedium,
+      color = colors.onSurfaceVariant,
+    )
+    Canvas(
+      modifier = Modifier
+        .fillMaxWidth()
+        .height(48.dp),
+    ) {
+      drawWavyTrack(
+        fraction = fraction,
+        thumbWidth = 5.dp.toPx(),
+        thumbHeight = 28.dp.toPx(),
+        activeColor = colors.primary,
+        inactiveColor = colors.secondaryContainer,
+      )
+    }
+    Row(
+      modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      Text(
+        text = formatTime(playedTime.inWholeMilliseconds, duration.inWholeMilliseconds),
+        style = MaterialTheme.typography.labelLargeEmphasized.copy(fontFeatureSettings = "tnum"),
+        color = colors.onSurfaceVariant,
+      )
+      Spacer(Modifier.weight(1F))
+      Text(
+        text = "−" + formatTime((duration - playedTime).inWholeMilliseconds, duration.inWholeMilliseconds),
+        style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
+        color = colors.onSurfaceVariant,
+      )
+    }
   }
 }
