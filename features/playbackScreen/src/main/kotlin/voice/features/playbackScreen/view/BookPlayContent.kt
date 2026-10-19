@@ -250,7 +250,7 @@ internal fun BookPlayContent(
       modifier = Modifier
         .fillMaxSize()
         .padding(contentPadding)
-        .padding(horizontal = 24.dp),
+        .padding(horizontal = 12.dp),
     )
   }
 }
@@ -323,6 +323,8 @@ private fun ControlsLayout(
     }
 
     val all = measurables.keys.sorted()
+    // Keep every playback control visible while giving the cover all remaining space.
+    // Avoid dropping the cover merely because less than 120dp is available.
     val minCover = MIN_COVER_HEIGHT.roundToPx()
     val compact = coverMeasurable == null || heightOf(all, compact = false) + minCover > height
     val showCover = coverMeasurable != null && heightOf(all, compact) + minCover <= height
@@ -360,7 +362,7 @@ private fun ControlsLayout(
 
 private val REGULAR_PLAY_BUTTON = 100.dp
 private val COMPACT_PLAY_BUTTON = 88.dp
-private val MIN_COVER_HEIGHT = 120.dp
+private val MIN_COVER_HEIGHT = 56.dp
 
 @Composable
 private fun TitleBlock(
