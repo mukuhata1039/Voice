@@ -339,8 +339,8 @@ private fun ControlsLayout(
   }
 }
 
-private val REGULAR_PLAY_BUTTON = 104.dp
-private val COMPACT_PLAY_BUTTON = 80.dp
+private val REGULAR_PLAY_BUTTON = 84.dp
+private val COMPACT_PLAY_BUTTON = 68.dp
 private val MIN_COVER_HEIGHT = 120.dp
 
 @Composable
