@@ -158,16 +158,6 @@ private fun LazyListScope.sections(
       onUseGridChange = listener::setUseGrid,
     )
   }
-  if (viewState.showSupportDevelopment) {
-    section("support") { modifier ->
-      SupportCard(
-        modifier = modifier,
-        badge = viewState.supporterBadge,
-        supporterSince = viewState.supporterSince,
-        onClick = listener::openSupportVoice,
-      )
-    }
-  }
   section("appearance") { modifier ->
     AppearanceSection(
       modifier = modifier,
@@ -201,18 +191,6 @@ private fun LazyListScope.sections(
       onEnabledChange = listener::setAutoSleepTimer,
       onStartChange = listener::setAutoSleepTimerStart,
       onEndChange = listener::setAutoSleepTimerEnd,
-    )
-  }
-  section("help") { modifier ->
-    HelpSection(
-      modifier = modifier,
-      showAnalytics = viewState.showAnalyticSetting,
-      analyticsEnabled = viewState.analyticsEnabled,
-      onFaqClick = listener::openFaq,
-      onGetHelpClick = listener::getSupport,
-      onReportClick = listener::openBugReport,
-      onSuggestClick = listener::suggestIdea,
-      onAnalyticsToggle = listener::toggleAnalytics,
     )
   }
   section("about") { modifier ->
