@@ -191,15 +191,7 @@ private fun WavySeekBar(
 ) {
   val colors = MaterialTheme.colorScheme
   val haptics = LocalHapticFeedback.current
-  val thumbWidth by animateDpAsState(
-    targetValue = if (dragging) 3.dp else 5.dp,
-    label = "thumbWidth",
-  )
-  val thumbHeight by animateDpAsState(
-    targetValue = if (dragging) 40.dp else 28.dp,
-    animationSpec = spring(dampingRatio = 0.45F, stiffness = Spring.StiffnessMedium),
-    label = "thumbHeight",
-  )
+  val thumbDiameter = 12.dp
   val bubbleScale by animateFloatAsState(
     targetValue = if (dragging) 1F else 0F,
     animationSpec = spring(dampingRatio = 0.5F, stiffness = Spring.StiffnessMedium),
@@ -255,8 +247,8 @@ private fun WavySeekBar(
             onDrawBehind {
               drawWavyTrack(
                 fraction = currentFraction,
-                thumbWidth = thumbWidth.toPx(),
-                thumbHeight = thumbHeight.toPx(),
+                thumbWidth = thumbDiameter.toPx(),
+                thumbHeight = thumbDiameter.toPx(),
                 activeColor = colors.primary,
                 inactiveColor = colors.secondaryContainer,
               )
@@ -284,13 +276,16 @@ private fun WavySeekBar(
   ) { measurables, constraints ->
     val bar = measurables[0].measure(constraints)
     val bubble = measurables[1].measure(Constraints())
-    layout(bar.width, bar.height) {
-      bar.place(0, 0)
+    // Keep the 32dp interactive hit area but overlap its unused vertical margins.
+    val visualHeight = 18.dp.roundToPx()
+    val barOffset = (bar.height - visualHeight) / 2
+    layout(bar.width, visualHeight) {
+      bar.place(0, -barOffset)
       val inset = HorizontalInset.toPx()
       val thumbX = inset + (bar.width - 2 * inset) * currentFraction
       val x = (thumbX - bubble.width / 2F).roundToInt()
         .coerceIn(0, (bar.width - bubble.width).coerceAtLeast(0))
-      bubble.place(x, -bubble.height + 2.dp.roundToPx())
+      bubble.place(x, -bubble.height + 2.dp.roundToPx() - barOffset)
     }
   }
 }
@@ -301,14 +296,15 @@ private fun DrawScope.drawWavyTrack(
   thumbHeight: Float,
   activeColor: Color,
   inactiveColor: Color,
+  showThumb: Boolean = true,
 ) {
   val inset = HorizontalInset.toPx()
   val strokeWidth = 5.dp.toPx()
-  val gap = 5.dp.toPx()
+  val gap = if (showThumb) 5.dp.toPx() else 0F
   val centerY = size.height / 2
   val end = size.width - inset
   val thumbX = inset + (end - inset) * fraction
-  val activeEnd = thumbX - thumbWidth / 2 - gap
+  val activeEnd = thumbX - (if (showThumb) thumbWidth / 2 + gap else 0F)
   if (activeEnd > inset) {
     drawLine(
       color = activeColor,
@@ -319,7 +315,7 @@ private fun DrawScope.drawWavyTrack(
     )
   }
 
-  val inactiveStart = thumbX + thumbWidth / 2 + gap
+  val inactiveStart = thumbX + (if (showThumb) thumbWidth / 2 + gap else 0F)
   if (inactiveStart < end) {
     drawLine(
       color = inactiveColor,
@@ -328,15 +324,16 @@ private fun DrawScope.drawWavyTrack(
       strokeWidth = strokeWidth,
       cap = StrokeCap.Round,
     )
-    drawCircle(color = activeColor, radius = 1.5.dp.toPx(), center = Offset(end, centerY))
+    if (showThumb) drawCircle(color = activeColor, radius = 1.5.dp.toPx(), center = Offset(end, centerY))
   }
 
-  drawRoundRect(
-    color = activeColor,
-    topLeft = Offset(thumbX - thumbWidth / 2, centerY - thumbHeight / 2),
-    size = Size(thumbWidth, thumbHeight),
-    cornerRadius = CornerRadius(thumbWidth / 2),
-  )
+  if (showThumb) {
+    drawCircle(
+      color = activeColor,
+      radius = thumbWidth / 2,
+      center = Offset(thumbX, centerY),
+    )
+  }
 }
 
 /**
@@ -388,14 +385,15 @@ internal fun VolumeProgressSection(
     Canvas(
       modifier = Modifier
         .fillMaxWidth()
-        .height(32.dp),
+        .height(18.dp),
     ) {
       drawWavyTrack(
         fraction = fraction,
         thumbWidth = 5.dp.toPx(),
-        thumbHeight = 28.dp.toPx(),
+        thumbHeight = 0F,
         activeColor = colors.primary,
         inactiveColor = colors.secondaryContainer,
+        showThumb = false,
       )
     }
     Row(
