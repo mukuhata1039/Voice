@@ -216,7 +216,7 @@ private fun WavySeekBar(
       Spacer(
         modifier = Modifier
           .fillMaxWidth()
-          .height(48.dp)
+          .height(32.dp)
           .semantics {
             progressBarRangeInfo = ProgressBarRangeInfo(current = fraction, range = 0F..1F)
             setProgress { target ->
@@ -388,7 +388,7 @@ internal fun VolumeProgressSection(
     Canvas(
       modifier = Modifier
         .fillMaxWidth()
-        .height(48.dp),
+        .height(32.dp),
     ) {
       drawWavyTrack(
         fraction = fraction,
