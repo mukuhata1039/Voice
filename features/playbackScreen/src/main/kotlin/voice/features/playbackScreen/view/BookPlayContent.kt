@@ -153,7 +153,7 @@ internal fun BookPlayContent(
           val volumePlayed = viewState.volumePlayedTime
           val volumeDuration = viewState.volumeDuration
           if (volumePlayed != null && volumeDuration != null && volumeDuration > Duration.ZERO) {
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(12.dp))
             VolumeProgressSection(
               playedTime = volumePlayed,
               duration = volumeDuration,
@@ -358,8 +358,8 @@ private fun ControlsLayout(
   }
 }
 
-private val REGULAR_PLAY_BUTTON = 84.dp
-private val COMPACT_PLAY_BUTTON = 68.dp
+private val REGULAR_PLAY_BUTTON = 100.dp
+private val COMPACT_PLAY_BUTTON = 88.dp
 private val MIN_COVER_HEIGHT = 120.dp
 
 @Composable
