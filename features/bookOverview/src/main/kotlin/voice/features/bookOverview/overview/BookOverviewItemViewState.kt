@@ -1,10 +1,12 @@
 package voice.features.bookOverview.overview
 
+import android.provider.DocumentsContract
 import androidx.compose.runtime.Immutable
 import voice.core.audiobookshelf.download.BookDownloadState
 import voice.core.audiobookshelf.download.WaitingFor
 import voice.core.data.Book
 import voice.core.data.BookId
+import voice.core.data.isRemote
 import voice.core.logging.api.Logger
 import voice.core.ui.formatTime
 
@@ -41,7 +43,7 @@ internal fun Book.toItemViewState(
   unavailable: Boolean = false,
   download: DownloadBadge? = null,
 ) = BookOverviewItemViewState(
-  name = content.name,
+  name = libraryDisplayName(),
   author = content.metadata.author,
   cover = content.coverUrl,
   id = id,
@@ -59,4 +61,16 @@ private fun Book.progress(): Float {
     Logger.w("Negative progress: position=$globalPosition, duration=$totalDuration")
   }
   return progress.coerceIn(0F, 1F)
+}
+
+/** The library can show a series folder without changing playback metadata. */
+private fun Book.libraryDisplayName(): String {
+  if (id.isRemote || chapters.size < 2 || chapters.first().id.value == id.value) return content.name
+  val uri = id.toUri()
+  if (uri.scheme != "content" || "document" !in uri.pathSegments) return content.name
+  val documentId = runCatching { DocumentsContract.getDocumentId(uri) }.getOrNull() ?: return content.name
+  // External storage IDs contain a path, e.g. primary:Books/Series.
+  // Opaque IDs from other document providers should keep the original name.
+  val folderName = documentId.substringAfterLast('/').trim()
+  return folderName.takeIf { '/' in documentId && it.isNotBlank() } ?: content.name
 }
