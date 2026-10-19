@@ -130,50 +130,54 @@ internal fun BookPlayContent(
         }
       }
       Control.Seek -> MediaControlsDirection {
-        Column {
-        SeekSection(
-          playedTime = viewState.playedTime,
-          duration = viewState.duration,
-          playing = viewState.playing,
-          clock = clock,
-          onSeek = onSeek,
-          jumpBack = viewState.jumpBack,
-          unavailable = viewState.unavailable,
-          onJumpBack = onJumpBack,
-          onJumpBackExpire = onJumpBackExpire,
+        Column(
           modifier = Modifier
             .fillMaxWidth()
             .entrance(entrance, 3),
-        )
-        val volumePlayed = viewState.volumePlayedTime
-        val volumeDuration = viewState.volumeDuration
-        if (volumePlayed != null && volumeDuration != null && volumeDuration > Duration.ZERO) {
-          Spacer(Modifier.height(6.dp))
-          Text(
-            text = "巻の進捗",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-          Spacer(Modifier.height(4.dp))
-          LinearProgressIndicator(
-            progress = { (volumePlayed / volumeDuration).toFloat().coerceIn(0F, 1F) },
+        ) {
+          SeekSection(
+            playedTime = viewState.playedTime,
+            duration = viewState.duration,
+            playing = viewState.playing,
+            clock = clock,
+            onSeek = onSeek,
+            jumpBack = viewState.jumpBack,
+            unavailable = viewState.unavailable,
+            onJumpBack = onJumpBack,
+            onJumpBackExpire = onJumpBackExpire,
             modifier = Modifier.fillMaxWidth(),
           )
-          Spacer(Modifier.height(6.dp))
-          Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-              text = formatTime(volumePlayed.inWholeMilliseconds, volumeDuration.inWholeMilliseconds),
-              style = MaterialTheme.typography.labelLargeEmphasized.copy(fontFeatureSettings = "tnum"),
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
+          val volumePlayed = viewState.volumePlayedTime
+          val volumeDuration = viewState.volumeDuration
+          if (volumePlayed != null && volumeDuration != null && volumeDuration > Duration.ZERO) {
+            Spacer(Modifier.height(10.dp))
+            LinearProgressIndicator(
+              progress = { (volumePlayed / volumeDuration).toFloat().coerceIn(0F, 1F) },
+              modifier = Modifier.fillMaxWidth(),
             )
-            Spacer(Modifier.weight(1F))
-            Text(
-              text = "−" + formatTime((volumeDuration - volumePlayed).inWholeMilliseconds, volumeDuration.inWholeMilliseconds),
-              style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Spacer(Modifier.height(6.dp))
+            Row(
+              modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+              verticalAlignment = Alignment.CenterVertically,
+            ) {
+              Text(
+                text = formatTime(volumePlayed.inWholeMilliseconds, volumeDuration.inWholeMilliseconds),
+                style = MaterialTheme.typography.labelLargeEmphasized.copy(fontFeatureSettings = "tnum"),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+              Spacer(Modifier.weight(1F))
+              Text(
+                text = "−" + formatTime(
+                  (volumeDuration - volumePlayed).inWholeMilliseconds,
+                  volumeDuration.inWholeMilliseconds,
+                ),
+                style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            }
           }
-        }
         }
       }
       // ControlsLayout picks the height, and the play button fills it
@@ -278,7 +282,7 @@ private enum class Control(
   BookProgress(12.dp, 12.dp),
   Chapter(12.dp, 8.dp),
   Seek(12.dp, 12.dp),
-  Transport(8.dp, 8.dp),
+  Transport(6.dp, 6.dp),
   Toolbar(12.dp, 8.dp),
 }
 
