@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,7 +44,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import voice.core.data.BookId
-import voice.core.ui.formatTime
 import voice.core.ui.entrance
 import voice.core.ui.rememberEntranceState
 import voice.features.playbackScreen.BookPlayViewState
@@ -135,6 +133,11 @@ internal fun BookPlayContent(
             .fillMaxWidth()
             .entrance(entrance, 3),
         ) {
+          Text(
+            text = "章",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
           SeekSection(
             playedTime = viewState.playedTime,
             duration = viewState.duration,
@@ -150,33 +153,12 @@ internal fun BookPlayContent(
           val volumePlayed = viewState.volumePlayedTime
           val volumeDuration = viewState.volumeDuration
           if (volumePlayed != null && volumeDuration != null && volumeDuration > Duration.ZERO) {
-            Spacer(Modifier.height(10.dp))
-            LinearProgressIndicator(
-              progress = { (volumePlayed / volumeDuration).toFloat().coerceIn(0F, 1F) },
+            Spacer(Modifier.height(18.dp))
+            VolumeProgressSection(
+              playedTime = volumePlayed,
+              duration = volumeDuration,
               modifier = Modifier.fillMaxWidth(),
             )
-            Spacer(Modifier.height(6.dp))
-            Row(
-              modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-              verticalAlignment = Alignment.CenterVertically,
-            ) {
-              Text(
-                text = formatTime(volumePlayed.inWholeMilliseconds, volumeDuration.inWholeMilliseconds),
-                style = MaterialTheme.typography.labelLargeEmphasized.copy(fontFeatureSettings = "tnum"),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-              )
-              Spacer(Modifier.weight(1F))
-              Text(
-                text = "−" + formatTime(
-                  (volumeDuration - volumePlayed).inWholeMilliseconds,
-                  volumeDuration.inWholeMilliseconds,
-                ),
-                style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-              )
-            }
           }
         }
       }
