@@ -6,6 +6,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -78,6 +79,18 @@ internal fun BookProgress(
           )
         },
         style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
+        color = colors.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+      )
+    }
+    viewState.volumeRemainingTime?.let { volumeRemaining ->
+      Spacer(Modifier.height(4.dp))
+      val adjusted = volumeRemaining / viewState.playbackSpeed.coerceAtLeast(0.1F).toDouble()
+      Text(
+        text = "巻の残り " + formatTime(adjusted.inWholeMilliseconds),
+        modifier = Modifier.fillMaxWidth(),
+        style = MaterialTheme.typography.labelLarge,
         color = colors.onSurfaceVariant,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
