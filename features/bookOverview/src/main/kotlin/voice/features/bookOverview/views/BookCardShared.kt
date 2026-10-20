@@ -1,5 +1,10 @@
 package voice.features.bookOverview.views
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
+import android.net.Uri
+import android.util.LruCache
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -14,19 +19,25 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import androidx.compose.foundation.Image
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import voice.core.audiobookshelf.download.WaitingFor
 import voice.core.data.BookId
 import voice.core.ui.icons.VoiceIcons
@@ -43,26 +54,58 @@ internal val CoverShape = RoundedCornerShape(percent = 12)
 internal fun BookCover(
   bookId: BookId,
   cover: String?,
+  volumeAudioUri: String? = null,
   modifier: Modifier = Modifier,
   shape: Shape = CoverShape,
   finished: Boolean = false,
   unavailable: Boolean = false,
   download: DownloadBadge? = null,
 ) {
+  val context = LocalContext.current
+  val embeddedCover by produceState<Bitmap?>(initialValue = null, volumeAudioUri) {
+    value = if (volumeAudioUri == null) null else withContext(Dispatchers.IO) {
+      synchronized(libraryVolumeCoverCache) { libraryVolumeCoverCache.get(volumeAudioUri) }
+        ?: runCatching {
+          val retriever = MediaMetadataRetriever()
+          try {
+            retriever.setDataSource(context, Uri.parse(volumeAudioUri))
+            val data = retriever.embeddedPicture ?: return@runCatching null
+            val original = BitmapFactory.decodeByteArray(data, 0, data.size) ?: return@runCatching null
+            val thumbnail = Bitmap.createScaledBitmap(original, 400, 400, true)
+            if (thumbnail !== original) original.recycle()
+            thumbnail
+          } finally {
+            retriever.release()
+          }
+        }.getOrNull()?.also { bitmap ->
+          synchronized(libraryVolumeCoverCache) { libraryVolumeCoverCache.put(volumeAudioUri, bitmap) }
+        }
+    }
+  }
   Box(modifier = modifier) {
-    AsyncImage(
-      modifier = Modifier
-        .fillMaxSize()
-        .sharedCoverElementModifier(bookId)
-        .clip(shape)
-        .alpha(if (unavailable) 0.4F else 1F),
-      model = rememberCoverThumbnailRequest(cover),
-      // a soft fill the cover fades in on, instead of the dark default art flashing up
-      placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceContainerHighest),
-      error = painterResource(id = UiR.drawable.album_art),
-      contentScale = ContentScale.Crop,
-      contentDescription = null,
-    )
+    val imageModifier = Modifier
+      .fillMaxSize()
+      .sharedCoverElementModifier(bookId)
+      .clip(shape)
+      .alpha(if (unavailable) 0.4F else 1F)
+    if (embeddedCover != null) {
+      Image(
+        bitmap = embeddedCover!!.asImageBitmap(),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = imageModifier,
+      )
+    } else {
+      AsyncImage(
+        modifier = imageModifier,
+        model = rememberCoverThumbnailRequest(cover),
+        // a soft fill the cover fades in on, instead of the dark default art flashing up
+        placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceContainerHighest),
+        error = painterResource(id = UiR.drawable.album_art),
+        contentScale = ContentScale.Crop,
+        contentDescription = null,
+      )
+    }
     // one badge per cover, what a download or the connection says matters more than being finished
     if (finished && download == null && !unavailable) {
       Box(
@@ -179,4 +222,9 @@ internal fun segmentedShape(
     index == count - 1 -> RoundedCornerShape(topStart = small, topEnd = small, bottomStart = large, bottomEnd = large)
     else -> RoundedCornerShape(small)
   }
+}
+
+// Limit the decoded per-volume thumbnails retained by the library.
+private val libraryVolumeCoverCache = object : LruCache<String, Bitmap>(8 * 1024 * 1024) {
+  override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount
 }
