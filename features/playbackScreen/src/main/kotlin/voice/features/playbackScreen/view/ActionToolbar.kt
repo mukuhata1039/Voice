@@ -108,7 +108,8 @@ internal fun ActionToolbar(
       active = speedChanged,
       icon = VoiceIcons.Speed,
       contentDescription = stringResource(R.string.playback_speed_title),
-      label = if (!compact && speedChanged) speedFormat.format(playbackSpeed) + "×" else null,
+      label = if (compact) null else if (speedChanged) speedFormat.format(playbackSpeed) + "×" else null,
+      compactText = if (compact) speedFormat.format(playbackSpeed) + "×" else null,
       onClick = onSpeedClick,
     )
     BookmarkAction(
@@ -204,6 +205,7 @@ private fun ToolbarAction(
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
   label: String? = null,
+  compactText: String? = null,
   onLongClick: (() -> Unit)? = null,
   onLongClickLabel: String? = null,
   selectable: Boolean = true,
@@ -226,6 +228,7 @@ private fun ToolbarAction(
       icon = icon,
       contentDescription = contentDescription,
       label = label,
+      compactText = compactText,
       selectable = selectable,
       toggle = toggle,
       onClick = {
@@ -247,6 +250,7 @@ private fun ToolbarActionContent(
   icon: ImageVector,
   contentDescription: String,
   label: String?,
+  compactText: String?,
   selectable: Boolean,
   toggle: Boolean,
   onClick: () -> Unit,
@@ -306,7 +310,16 @@ private fun ToolbarActionContent(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.Center,
   ) {
-    Icon(imageVector = icon, contentDescription = null, tint = content)
+    if (compact && compactText != null) {
+      Text(
+        text = compactText,
+        style = MaterialTheme.typography.labelLargeEmphasized,
+        color = content,
+        maxLines = 1,
+      )
+    } else {
+      Icon(imageVector = icon, contentDescription = null, tint = content)
+    }
     if (label != null) {
       Spacer(Modifier.width(4.dp))
       RollingText(
