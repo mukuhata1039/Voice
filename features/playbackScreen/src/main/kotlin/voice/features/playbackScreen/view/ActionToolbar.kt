@@ -18,6 +18,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -76,6 +77,7 @@ internal fun ActionToolbar(
   playbackSpeed: Float,
   skipSilence: Boolean,
   volumeBoostActive: Boolean,
+  compact: Boolean = false,
   onSleepTimerClick: () -> Unit,
   onSpeedClick: () -> Unit,
   onBookmarkClick: () -> Unit,
@@ -85,18 +87,14 @@ internal fun ActionToolbar(
   modifier: Modifier = Modifier,
 ) {
   val speedFormat = remember { DecimalFormat("0.0#") }
-  HorizontalFloatingToolbar(
-    expanded = true,
-    modifier = modifier,
-    colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
-  ) {
+  val actions: @Composable () -> Unit = {
     val sleepTimerActive = sleepTimerState is BookPlayViewState.SleepTimerViewState.Enabled
     ToolbarAction(
       active = sleepTimerActive,
       // a click cancels a running timer
       icon = if (sleepTimerActive) VoiceIcons.BedtimeOff else VoiceIcons.Bedtime,
       contentDescription = stringResource(R.string.sleep_timer_action_open),
-      label = (sleepTimerState as? BookPlayViewState.SleepTimerViewState.Enabled.WithDuration)
+      label = if (compact) null else (sleepTimerState as? BookPlayViewState.SleepTimerViewState.Enabled.WithDuration)
         ?.let { formatTime(it.leftDuration.inWholeMilliseconds) },
       onClick = onSleepTimerClick,
     )
@@ -105,7 +103,7 @@ internal fun ActionToolbar(
       active = speedChanged,
       icon = VoiceIcons.Speed,
       contentDescription = stringResource(R.string.playback_speed_title),
-      label = if (speedChanged) speedFormat.format(playbackSpeed) + "×" else null,
+      label = if (!compact && speedChanged) speedFormat.format(playbackSpeed) + "×" else null,
       onClick = onSpeedClick,
     )
     BookmarkAction(
@@ -127,6 +125,15 @@ internal fun ActionToolbar(
       contentDescription = stringResource(R.string.playback_option_volume_boost),
       onClick = onVolumeBoostClick,
     )
+  }
+  if (compact) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) { actions() }
+  } else {
+    HorizontalFloatingToolbar(
+      expanded = true,
+      modifier = modifier,
+      colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
+    ) { actions() }
   }
 }
 
