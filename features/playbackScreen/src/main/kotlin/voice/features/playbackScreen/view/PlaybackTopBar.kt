@@ -25,12 +25,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import voice.core.strings.R
 import voice.core.ui.icons.VoiceIcons
+import voice.features.playbackScreen.BookPlayViewState
 
 @Composable
 internal fun PlaybackTopBar(
-  showChapters: Boolean,
+  viewState: BookPlayViewState,
+  onSleepTimerClick: () -> Unit,
+  onSpeedChangeClick: () -> Unit,
+  onBookmarkClick: () -> Unit,
+  onBookmarkLongClick: () -> Unit,
+  onSkipSilenceClick: () -> Unit,
+  onVolumeBoostClick: () -> Unit,
   onCloseClick: () -> Unit,
-  onChaptersClick: () -> Unit,
   onBookActionsClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -43,9 +49,20 @@ internal fun PlaybackTopBar(
   ) {
     CloseButton(onClick = onCloseClick)
     Spacer(Modifier.weight(1F))
-    if (showChapters) {
-      ChaptersButton(onClick = onChaptersClick)
-    }
+    ActionToolbar(
+      sleepTimerState = viewState.sleepTimerState,
+      playbackSpeed = viewState.playbackSpeed,
+      skipSilence = viewState.skipSilence,
+      volumeBoostActive = viewState.volumeBoostActive,
+      compact = true,
+      onSleepTimerClick = onSleepTimerClick,
+      onSpeedClick = onSpeedChangeClick,
+      onBookmarkClick = onBookmarkClick,
+      onBookmarkLongClick = onBookmarkLongClick,
+      onSkipSilenceClick = onSkipSilenceClick,
+      onVolumeBoostClick = onVolumeBoostClick,
+    )
+    Spacer(Modifier.weight(1F))
     BookActionsButton(onClick = onBookActionsClick)
   }
 }
