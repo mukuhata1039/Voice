@@ -2,8 +2,9 @@
 
 package voice.features.playbackScreen.view
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,30 +43,36 @@ internal fun PlaybackTopBar(
   onBookActionsClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  Row(
+  BoxWithConstraints(
     modifier = modifier
       .fillMaxWidth()
       .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
-      .padding(horizontal = 12.dp, vertical = 8.dp),
-    verticalAlignment = Alignment.CenterVertically,
+      .padding(horizontal = 8.dp, vertical = 8.dp),
   ) {
-    CloseButton(onClick = onCloseClick)
-    Spacer(Modifier.weight(1F))
-    ActionToolbar(
-      sleepTimerState = viewState.sleepTimerState,
-      playbackSpeed = viewState.playbackSpeed,
-      skipSilence = viewState.skipSilence,
-      volumeBoostActive = viewState.volumeBoostActive,
-      compact = true,
-      onSleepTimerClick = onSleepTimerClick,
-      onSpeedClick = onSpeedChangeClick,
-      onBookmarkClick = onBookmarkClick,
-      onBookmarkLongClick = onBookmarkLongClick,
-      onSkipSilenceClick = onSkipSilenceClick,
-      onVolumeBoostClick = onVolumeBoostClick,
-    )
-    Spacer(Modifier.weight(1F))
-    BookActionsButton(onClick = onBookActionsClick)
+    // Seven equal 44dp button slots, with exactly the same gap between each pair.
+    val buttonGap = ((maxWidth - 7 * 44.dp) / 6).coerceAtLeast(0.dp)
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.spacedBy(buttonGap),
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      CloseButton(onClick = onCloseClick)
+      ActionToolbar(
+        sleepTimerState = viewState.sleepTimerState,
+        playbackSpeed = viewState.playbackSpeed,
+        skipSilence = viewState.skipSilence,
+        volumeBoostActive = viewState.volumeBoostActive,
+        compact = true,
+        compactSpacing = buttonGap,
+        onSleepTimerClick = onSleepTimerClick,
+        onSpeedClick = onSpeedChangeClick,
+        onBookmarkClick = onBookmarkClick,
+        onBookmarkLongClick = onBookmarkLongClick,
+        onSkipSilenceClick = onSkipSilenceClick,
+        onVolumeBoostClick = onVolumeBoostClick,
+      )
+      BookActionsButton(onClick = onBookActionsClick)
+    }
   }
 }
 
