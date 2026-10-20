@@ -15,14 +15,14 @@ data class BookOverviewItemViewState(
   val name: String,
   val author: String?,
   val cover: String?,
-  /** Audio file used to show the current volume's embedded cover in the library. */
-  val volumeAudioUri: String? = null,
   val progress: Float,
   val id: BookId,
   val remainingTime: String,
   /** A server book that isn't downloaded while the server can't be reached. */
   val unavailable: Boolean = false,
   val download: DownloadBadge? = null,
+  /** Audio file used to show the current volume's embedded cover in the library. */
+  val volumeAudioUri: String? = null,
 )
 
 @Immutable
