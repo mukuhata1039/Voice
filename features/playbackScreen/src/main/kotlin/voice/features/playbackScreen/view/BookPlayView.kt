@@ -66,9 +66,14 @@ internal fun BookPlayView(
       topBar = {
         if (!sideBySide) {
           PlaybackTopBar(
-            showChapters = viewState.showPreviousNextButtons,
+            viewState = viewState,
+            onSleepTimerClick = onSleepTimerClick,
+            onSpeedChangeClick = onSpeedChangeClick,
+            onBookmarkClick = onBookmarkClick,
+            onBookmarkLongClick = onBookmarkLongClick,
+            onSkipSilenceClick = onSkipSilenceClick,
+            onVolumeBoostClick = onVolumeBoostClick,
             onCloseClick = onCloseClick,
-            onChaptersClick = onCurrentChapterClick,
             onBookActionsClick = onBookActionsClick,
           )
         }
