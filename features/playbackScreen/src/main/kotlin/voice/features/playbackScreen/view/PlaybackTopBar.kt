@@ -50,7 +50,7 @@ internal fun PlaybackTopBar(
       .padding(horizontal = 8.dp, vertical = 8.dp),
   ) {
     // Seven equal 44dp button slots, with exactly the same gap between each pair.
-    val buttonGap = ((maxWidth - 7 * 44.dp) / 6).coerceAtLeast(0.dp)
+    val buttonGap = ((maxWidth - 44.dp * 7) / 6).coerceAtLeast(0.dp)
     Row(
       modifier = Modifier.fillMaxWidth(),
       horizontalArrangement = Arrangement.spacedBy(buttonGap),
