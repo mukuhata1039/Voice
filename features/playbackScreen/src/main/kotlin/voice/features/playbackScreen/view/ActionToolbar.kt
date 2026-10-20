@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarDefaults
@@ -90,6 +91,7 @@ internal fun ActionToolbar(
   val actions: @Composable () -> Unit = {
     val sleepTimerActive = sleepTimerState is BookPlayViewState.SleepTimerViewState.Enabled
     ToolbarAction(
+      compact = compact,
       active = sleepTimerActive,
       // a click cancels a running timer
       icon = if (sleepTimerActive) VoiceIcons.BedtimeOff else VoiceIcons.Bedtime,
@@ -100,6 +102,7 @@ internal fun ActionToolbar(
     )
     val speedChanged = playbackSpeed !in 0.99F..1.01F
     ToolbarAction(
+      compact = compact,
       active = speedChanged,
       icon = VoiceIcons.Speed,
       contentDescription = stringResource(R.string.playback_speed_title),
@@ -107,10 +110,12 @@ internal fun ActionToolbar(
       onClick = onSpeedClick,
     )
     BookmarkAction(
+      compact = compact,
       onClick = onBookmarkClick,
       onLongClick = onBookmarkLongClick,
     )
     ToolbarAction(
+      compact = compact,
       active = skipSilence,
       icon = VoiceIcons.ContentCut,
       contentDescription = stringResource(R.string.playback_option_skip_silence),
@@ -120,6 +125,7 @@ internal fun ActionToolbar(
       showTooltipOnClick = true,
     )
     ToolbarAction(
+      compact = compact,
       active = volumeBoostActive,
       icon = VoiceIcons.VolumeUp,
       contentDescription = stringResource(R.string.playback_option_volume_boost),
@@ -139,6 +145,7 @@ internal fun ActionToolbar(
 
 @Composable
 private fun BookmarkAction(
+  compact: Boolean,
   onClick: () -> Unit,
   onLongClick: () -> Unit,
   modifier: Modifier = Modifier,
@@ -158,7 +165,7 @@ private fun BookmarkAction(
     if (burst.value < 1F) {
       Box(
         modifier = Modifier
-          .size(48.dp)
+          .size(if (compact) 44.dp else 48.dp)
           .graphicsLayer {
             val p = burst.value
             scaleX = 0.4F + 1.2F * p
@@ -170,6 +177,7 @@ private fun BookmarkAction(
       )
     }
     ToolbarAction(
+      compact = compact,
       active = burst.value < 0.5F,
       icon = if (burst.value < 1F) VoiceIcons.BookmarkAdd else VoiceIcons.CollectionsBookmark,
       contentDescription = stringResource(R.string.bookmark_title),
@@ -187,6 +195,7 @@ private fun BookmarkAction(
 
 @Composable
 private fun ToolbarAction(
+  compact: Boolean = false,
   active: Boolean,
   icon: ImageVector,
   contentDescription: String,
@@ -210,6 +219,7 @@ private fun ToolbarAction(
     enableUserInput = onLongClick == null,
   ) {
     ToolbarActionContent(
+      compact = compact,
       active = active,
       icon = icon,
       contentDescription = contentDescription,
@@ -230,6 +240,7 @@ private fun ToolbarAction(
 
 @Composable
 private fun ToolbarActionContent(
+  compact: Boolean,
   active: Boolean,
   icon: ImageVector,
   contentDescription: String,
@@ -247,11 +258,11 @@ private fun ToolbarActionContent(
   val inactiveContent = LocalContentColor.current
   // The vibrant toolbar sits on primaryContainer, so active items invert it for maximum contrast.
   val container by animateColorAsState(
-    targetValue = if (active) colors.onPrimaryContainer else Color.Transparent,
+    targetValue = if (active) colors.onPrimaryContainer else if (compact) colors.surfaceContainerHighest.copy(alpha = 0.9F) else Color.Transparent,
     label = "toolbarContainer",
   )
   val content by animateColorAsState(
-    targetValue = if (active) colors.primaryContainer else inactiveContent,
+    targetValue = if (active) colors.primaryContainer else if (compact) colors.onSurface else inactiveContent,
     label = "toolbarContent",
   )
   val corner by animateDpAsState(
@@ -271,9 +282,8 @@ private fun ToolbarActionContent(
         scaleY = scale
       }
       .animateContentSize(spring(dampingRatio = 0.6F, stiffness = Spring.StiffnessMediumLow))
-      .height(48.dp)
-      .widthIn(min = 48.dp)
-      .clip(RoundedCornerShape(corner))
+      .then(if (compact) Modifier.size(44.dp) else Modifier.height(48.dp).widthIn(min = 48.dp))
+      .clip(if (compact) CircleShape else RoundedCornerShape(corner))
       .background(container)
       .combinedClickable(
         interactionSource = interactionSource,
@@ -290,7 +300,7 @@ private fun ToolbarActionContent(
           selectable -> selected = active
         }
       }
-      .padding(horizontal = if (label != null) 10.dp else 12.dp),
+      .padding(horizontal = if (compact) 0.dp else if (label != null) 10.dp else 12.dp),
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.Center,
   ) {
