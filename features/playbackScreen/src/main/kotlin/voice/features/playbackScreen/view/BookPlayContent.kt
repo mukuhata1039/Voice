@@ -152,6 +152,7 @@ internal fun BookPlayContent(
             VolumeProgressSection(
               playedTime = volumePlayed,
               duration = volumeDuration,
+              playbackSpeed = viewState.playbackSpeed,
               modifier = Modifier.fillMaxWidth(),
             )
           }
