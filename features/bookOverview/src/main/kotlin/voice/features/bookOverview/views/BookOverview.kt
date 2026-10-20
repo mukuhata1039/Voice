@@ -3,11 +3,19 @@
 package voice.features.bookOverview.views
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -16,6 +24,9 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBarDefaults
@@ -30,6 +41,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.graphics.shapes.Morph
+import voice.core.ui.MorphShape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -92,6 +108,7 @@ fun BookOverviewScreen(modifier: Modifier = Modifier) {
     onBookFolderClick = bookOverviewViewModel::onBookFolderClick,
     onFolderPickerMovedDialogDismiss = bookOverviewViewModel::onFolderPickerMovedDialogDismiss,
     onPlayButtonClick = bookOverviewViewModel::playPause,
+    onOpenPlayerClick = { viewState.currentBookId?.let(bookOverviewViewModel::onBookClick) },
     onSearchClick = bookOverviewViewModel::onSearchClick,
     onPermissionBugCardClick = bookOverviewViewModel::onPermissionBugCardClick,
     modifier = modifier,
@@ -107,6 +124,7 @@ internal fun BookOverview(
   onBookFolderClick: () -> Unit,
   onFolderPickerMovedDialogDismiss: () -> Unit,
   onPlayButtonClick: () -> Unit,
+  onOpenPlayerClick: () -> Unit,
   onSearchClick: () -> Unit,
   onPermissionBugCardClick: () -> Unit,
   modifier: Modifier = Modifier,
@@ -134,12 +152,21 @@ internal fun BookOverview(
         enter = scaleIn() + fadeIn(),
         exit = scaleOut() + fadeOut(),
       ) {
-        PlayButton(
-          playing = playButtonState == BookOverviewViewState.PlayButtonState.Playing,
-          onClick = onPlayButtonClick,
+        Column(
           modifier = Modifier.navigationBarsPadding(),
-          size = 64.dp,
-        )
+          horizontalAlignment = Alignment.CenterHorizontally,
+          verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+          OpenPlayerButton(
+            playing = playButtonState == BookOverviewViewState.PlayButtonState.Playing,
+            onClick = onOpenPlayerClick,
+          )
+          PlayButton(
+            playing = playButtonState == BookOverviewViewState.PlayButtonState.Playing,
+            onClick = onPlayButtonClick,
+            size = 64.dp,
+          )
+        }
       }
     },
     contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -160,6 +187,34 @@ internal fun BookOverview(
     dialog = viewState.dialog,
     onFolderPickerMovedDialogDismiss = onFolderPickerMovedDialogDismiss,
   )
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun OpenPlayerButton(
+  playing: Boolean,
+  onClick: () -> Unit,
+) {
+  val morph = remember { Morph(MaterialShapes.Cookie9Sided, MaterialShapes.Square) }
+  val morphProgress by animateFloatAsState(
+    targetValue = if (playing) 1F else 0F,
+    label = "openPlayerMorph",
+  )
+  Box(
+    modifier = Modifier
+      .size(64.dp)
+      .clip(MorphShape(morph, morphProgress))
+      .background(MaterialTheme.colorScheme.primary)
+      .clickable(role = Role.Button, onClick = onClick),
+    contentAlignment = Alignment.Center,
+  ) {
+    Icon(
+      imageVector = VoiceIcons.LibraryBooks,
+      contentDescription = "再生画面を開く",
+      tint = MaterialTheme.colorScheme.onPrimary,
+      modifier = Modifier.size(26.dp),
+    )
+  }
 }
 
 /** Whether the hero card's play button is on screen, which makes a floating one redundant. */
@@ -225,6 +280,7 @@ fun BookOverviewPreview(
       onBookFolderClick = {},
       onFolderPickerMovedDialogDismiss = {},
       onPlayButtonClick = {},
+      onOpenPlayerClick = {},
       onSearchClick = {},
       onPermissionBugCardClick = {},
     )
