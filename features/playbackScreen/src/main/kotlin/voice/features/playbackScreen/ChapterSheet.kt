@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +52,7 @@ import voice.core.strings.R as StringsR
 @Composable
 internal fun ChapterSheet(
   dialogState: BookPlayDialogViewState.SelectChapterDialog,
+  volumeTitles: Map<String, String?>,
   playing: Boolean,
   onChapterClick: (number: Int) -> Unit,
   onDismiss: () -> Unit,
@@ -120,11 +122,23 @@ internal fun ChapterSheet(
               shape = RoundedCornerShape(12.dp),
               onClick = { if (volume in expanded) expanded.remove(volume) else expanded.add(volume) },
             ) {
-              Text(
-                text = "${if (volume in expanded) "▼" else "▶"}  ${chapters.firstOrNull()?.volumeTitle ?: volume}",
+              Row(
                 modifier = Modifier.padding(16.dp),
-                style = MaterialTheme.typography.titleMedium,
-              )
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+              ) {
+                Text(
+                  text = "${if (volume in expanded) "▼" else "▶"}  ${volumeTitles[volume] ?: chapters.firstOrNull()?.volumeTitle ?: volume}",
+                  style = MaterialTheme.typography.titleMedium,
+                  modifier = Modifier.weight(1F),
+                )
+                if (!volumeTitles.containsKey(volume) && chapters.firstOrNull()?.volumeTitle == null) {
+                  CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    strokeWidth = 2.dp,
+                  )
+                }
+              }
             }
           }
           if (volume in expanded) {
