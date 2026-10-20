@@ -64,6 +64,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import voice.core.strings.R
@@ -79,6 +80,7 @@ internal fun ActionToolbar(
   skipSilence: Boolean,
   volumeBoostActive: Boolean,
   compact: Boolean = false,
+  compactSpacing: Dp = 0.dp,
   onSleepTimerClick: () -> Unit,
   onSpeedClick: () -> Unit,
   onBookmarkClick: () -> Unit,
@@ -133,7 +135,7 @@ internal fun ActionToolbar(
     )
   }
   if (compact) {
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) { actions() }
+    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(compactSpacing), verticalAlignment = Alignment.CenterVertically) { actions() }
   } else {
     HorizontalFloatingToolbar(
       expanded = true,
@@ -258,7 +260,7 @@ private fun ToolbarActionContent(
   val inactiveContent = LocalContentColor.current
   // The vibrant toolbar sits on primaryContainer, so active items invert it for maximum contrast.
   val container by animateColorAsState(
-    targetValue = if (active) colors.onPrimaryContainer else if (compact) colors.surfaceContainerHighest.copy(alpha = 0.9F) else Color.Transparent,
+    targetValue = if (active) colors.onPrimaryContainer else Color.Transparent,
     label = "toolbarContainer",
   )
   val content by animateColorAsState(
