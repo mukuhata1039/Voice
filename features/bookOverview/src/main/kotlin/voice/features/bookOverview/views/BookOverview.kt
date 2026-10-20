@@ -9,6 +9,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -23,8 +24,6 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.toShape
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -192,7 +191,7 @@ private fun OpenPlayerButton(
   Box(
     modifier = Modifier
       .size(64.dp)
-      .clip(MaterialShapes.Cookie9Sided.toShape())
+      .clip(CircleShape)
       .background(MaterialTheme.colorScheme.primary)
       .clickable(role = Role.Button, onClick = onClick),
     contentAlignment = Alignment.Center,
