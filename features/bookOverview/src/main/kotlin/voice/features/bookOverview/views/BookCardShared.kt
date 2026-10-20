@@ -38,6 +38,8 @@ import coil.compose.AsyncImage
 import androidx.compose.foundation.Image
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import voice.core.audiobookshelf.download.WaitingFor
 import voice.core.data.BookId
 import voice.core.ui.icons.VoiceIcons
@@ -62,24 +64,33 @@ internal fun BookCover(
   volumeAudioUri: String? = null,
 ) {
   val context = LocalContext.current
-  val embeddedCover by produceState<Bitmap?>(initialValue = null, volumeAudioUri) {
-    value = if (volumeAudioUri == null) null else withContext(Dispatchers.IO) {
-      synchronized(libraryVolumeCoverCache) { libraryVolumeCoverCache.get(volumeAudioUri) }
-        ?: runCatching {
-          val retriever = MediaMetadataRetriever()
-          try {
-            retriever.setDataSource(context, Uri.parse(volumeAudioUri))
-            val data = retriever.embeddedPicture ?: return@runCatching null
-            val original = BitmapFactory.decodeByteArray(data, 0, data.size) ?: return@runCatching null
-            val thumbnail = Bitmap.createScaledBitmap(original, 400, 400, true)
-            if (thumbnail !== original) original.recycle()
-            thumbnail
-          } finally {
-            retriever.release()
-          }
-        }.getOrNull()?.also { bitmap ->
-          synchronized(libraryVolumeCoverCache) { libraryVolumeCoverCache.put(volumeAudioUri, bitmap) }
+  val embeddedCover by produceState<Bitmap?>(initialValue = volumeAudioUri?.let { libraryVolumeCoverCache.get(it) }, volumeAudioUri) {
+    value = volumeAudioUri?.let { audioUri ->
+      withContext(Dispatchers.IO) {
+        // The same image may be requested by the hero card and a library tile together.
+        // Decode once and downsample before allocating the bitmap.
+        libraryVolumeCoverMutex.withLock {
+          libraryVolumeCoverCache.get(audioUri) ?: runCatching {
+            val retriever = MediaMetadataRetriever()
+            try {
+              retriever.setDataSource(context, Uri.parse(audioUri))
+              val data = retriever.embeddedPicture ?: return@runCatching null
+              val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+              BitmapFactory.decodeByteArray(data, 0, data.size, bounds)
+              var sampleSize = 1
+              while (bounds.outWidth / sampleSize > 400 || bounds.outHeight / sampleSize > 400) {
+                sampleSize *= 2
+              }
+              val bitmap = BitmapFactory.decodeByteArray(
+                data, 0, data.size, BitmapFactory.Options().apply { inSampleSize = sampleSize },
+              )
+              bitmap?.also { libraryVolumeCoverCache.put(audioUri, it) }
+            } finally {
+              retriever.release()
+            }
+          }.getOrNull()
         }
+      }
     }
   }
   Box(modifier = modifier) {
@@ -225,6 +236,7 @@ internal fun segmentedShape(
 }
 
 // Limit the decoded per-volume thumbnails retained by the library.
+private val libraryVolumeCoverMutex = Mutex()
 private val libraryVolumeCoverCache = object : LruCache<String, Bitmap>(8 * 1024 * 1024) {
   override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount
 }
