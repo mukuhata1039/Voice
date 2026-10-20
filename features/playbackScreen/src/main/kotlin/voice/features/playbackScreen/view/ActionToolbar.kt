@@ -34,12 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipAnchorPosition
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.ripple
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
@@ -47,7 +42,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,7 +60,6 @@ import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import voice.core.strings.R
 import voice.core.ui.formatTime
 import voice.core.ui.icons.VoiceIcons
@@ -124,8 +117,6 @@ internal fun ActionToolbar(
       contentDescription = stringResource(R.string.playback_option_skip_silence),
       onClick = onSkipSilenceClick,
       toggle = true,
-      // the only option that doesn't open a titled screen, and its icon alone is ambiguous
-      showTooltipOnClick = true,
     )
     ToolbarAction(
       compact = compact,
@@ -210,37 +201,21 @@ private fun ToolbarAction(
   onLongClickLabel: String? = null,
   selectable: Boolean = true,
   toggle: Boolean = false,
-  showTooltipOnClick: Boolean = false,
 ) {
-  val scope = rememberCoroutineScope()
-  val tooltipState = rememberTooltipState()
-  TooltipBox(
-    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-    tooltip = { PlainTooltip { Text(contentDescription) } },
-    state = tooltipState,
+  ToolbarActionContent(
     modifier = modifier,
-    // a long click of its own takes precedence over showing the tooltip
-    enableUserInput = onLongClick == null,
-  ) {
-    ToolbarActionContent(
-      compact = compact,
-      active = active,
-      icon = icon,
-      contentDescription = contentDescription,
-      label = label,
-      compactText = compactText,
-      selectable = selectable,
-      toggle = toggle,
-      onClick = {
-        onClick()
-        if (showTooltipOnClick) {
-          scope.launch { tooltipState.show() }
-        }
-      },
-      onLongClick = onLongClick,
-      onLongClickLabel = onLongClickLabel,
-    )
-  }
+    compact = compact,
+    active = active,
+    icon = icon,
+    contentDescription = contentDescription,
+    label = label,
+    compactText = compactText,
+    selectable = selectable,
+    toggle = toggle,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    onLongClickLabel = onLongClickLabel,
+  )
 }
 
 @Composable
