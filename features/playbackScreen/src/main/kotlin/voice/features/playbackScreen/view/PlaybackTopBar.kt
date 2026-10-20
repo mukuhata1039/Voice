@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -115,8 +117,8 @@ private fun TopBarButton(
 ) {
   FilledTonalIconButton(
     onClick = onClick,
-    modifier = modifier,
-    shapes = IconButtonDefaults.shapes(),
+    modifier = modifier.size(44.dp),
+    shape = CircleShape,
     colors = topBarButtonColors(),
   ) {
     Icon(
