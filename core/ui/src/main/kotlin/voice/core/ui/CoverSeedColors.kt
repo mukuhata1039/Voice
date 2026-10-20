@@ -113,7 +113,7 @@ class CoverSeedColors(
   suspend fun loadEmbeddedArtwork(audioUri: String): Color? {
     val key = "embedded:$audioUri"
     restore()
-    memory[key]?.let { return it.takeIf(Color::isSpecified) }
+    memory[key]?.let { return it.takeIf { cached -> cached.isSpecified } }
     val color = withContext(Dispatchers.IO) {
       runCatching {
         val retriever = MediaMetadataRetriever()
