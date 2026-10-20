@@ -173,7 +173,7 @@ internal fun BookPlayContent(
           )
         }
       }
-      Control.Toolbar -> ActionToolbar(
+      Control.Toolbar -> if (sideBySide) ActionToolbar(
         sleepTimerState = viewState.sleepTimerState,
         playbackSpeed = viewState.playbackSpeed,
         skipSilence = viewState.skipSilence,
