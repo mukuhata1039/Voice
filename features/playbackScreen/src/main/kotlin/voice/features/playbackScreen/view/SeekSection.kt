@@ -112,18 +112,29 @@ internal fun SeekSection(
   var showRemaining by rememberSaveable { mutableStateOf(true) }
 
   Column(modifier = modifier) {
-    WavySeekBar(
-      fraction = shownFraction,
-      dragging = dragging,
-      bubbleText = formatTime(shownTime.inWholeMilliseconds, duration.inWholeMilliseconds),
-      onDrag = { dragFraction = it },
-      onSeek = { fraction ->
-        dragFraction = null
-        pendingFraction = fraction
-        onSeek(duration * fraction.toDouble())
-      },
+    Row(
       modifier = Modifier.fillMaxWidth(),
-    )
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      Text(
+        text = "章",
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.width(24.dp),
+      )
+      WavySeekBar(
+        fraction = shownFraction,
+        dragging = dragging,
+        bubbleText = formatTime(shownTime.inWholeMilliseconds, duration.inWholeMilliseconds),
+        onDrag = { dragFraction = it },
+        onSeek = { fraction ->
+          dragFraction = null
+          pendingFraction = fraction
+          onSeek(duration * fraction.toDouble())
+        },
+        modifier = Modifier.weight(1F),
+      )
+    }
     Row(
       modifier = Modifier
         .fillMaxWidth()
@@ -377,24 +388,30 @@ internal fun VolumeProgressSection(
   val colors = MaterialTheme.colorScheme
   val fraction = (playedTime / duration).toFloat().coerceIn(0F, 1F)
   Column(modifier = modifier) {
-    Text(
-      text = "巻",
-      style = MaterialTheme.typography.labelMedium,
-      color = colors.onSurfaceVariant,
-    )
-    Canvas(
-      modifier = Modifier
-        .fillMaxWidth()
-        .height(18.dp),
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      verticalAlignment = Alignment.CenterVertically,
     ) {
-      drawWavyTrack(
-        fraction = fraction,
-        thumbWidth = 5.dp.toPx(),
-        thumbHeight = 0F,
-        activeColor = colors.primary,
-        inactiveColor = colors.secondaryContainer,
-        showThumb = false,
+      Text(
+        text = "巻",
+        style = MaterialTheme.typography.labelMedium,
+        color = colors.onSurfaceVariant,
+        modifier = Modifier.width(24.dp),
       )
+      Canvas(
+        modifier = Modifier
+          .weight(1F)
+          .height(18.dp),
+      ) {
+        drawWavyTrack(
+          fraction = fraction,
+          thumbWidth = 5.dp.toPx(),
+          thumbHeight = 0F,
+          activeColor = colors.primary,
+          inactiveColor = colors.secondaryContainer,
+          showThumb = false,
+        )
+      }
     }
     Row(
       modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
