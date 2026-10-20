@@ -51,7 +51,7 @@ internal fun InProgressCarousel(
       .height(240.dp),
   ) { index ->
     val book = books[index]
-    val shape = MaterialTheme.shapes.extraLarge
+    val shape = CoverShape
     Box(
       modifier = Modifier
         .fillMaxSize()
