@@ -2,6 +2,7 @@
 
 package voice.core.ui
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -52,7 +53,11 @@ fun PlayButton(
   val interactionSource = remember { MutableInteractionSource() }
   val pressed by interactionSource.collectIsPressedAsState()
   val morph = remember { Morph(MaterialShapes.Cookie9Sided, MaterialShapes.Square) }
-  val morphProgress = if (playing) 1F else 0F
+  val morphProgress by animateFloatAsState(
+    targetValue = if (playing) 1F else 0F,
+    animationSpec = spring(dampingRatio = 0.75F, stiffness = Spring.StiffnessMedium),
+    label = "playPauseMorph",
+  )
   val scale by animateFloatAsState(
     targetValue = if (pressed) 0.86F else 1F,
     animationSpec = spring(dampingRatio = 0.4F, stiffness = Spring.StiffnessMedium),
@@ -81,14 +86,18 @@ fun PlayButton(
   ) {
     // animated vectors always mirror in right to left layouts, but a play arrow never points left
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-      Icon(
-        modifier = Modifier.fillMaxSize(0.4F),
-        imageVector = if (playing) VoiceIcons.Pause else VoiceIcons.PlayArrow,
-        contentDescription = stringResource(
-          id = if (playing) StringsR.string.playback_action_pause else StringsR.string.playback_action_play,
-        ),
-        tint = contentColor,
-      )
+      Crossfade(targetState = playing, label = "playPauseIcon") { isPlaying ->
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+          Icon(
+            modifier = Modifier.fillMaxSize(0.4F),
+            imageVector = if (isPlaying) VoiceIcons.Pause else VoiceIcons.PlayArrow,
+            contentDescription = stringResource(
+              id = if (isPlaying) StringsR.string.playback_action_pause else StringsR.string.playback_action_play,
+            ),
+            tint = contentColor,
+          )
+        }
+      }
     }
   }
 }
