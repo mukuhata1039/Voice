@@ -110,11 +110,7 @@ internal fun PlaybackCover(
     animationSpec = spring(dampingRatio = 0.55F, stiffness = Spring.StiffnessLow),
     label = "coverScale",
   )
-  val cornerPercent by animateFloatAsState(
-    targetValue = if (playing) 8F else 14F,
-    animationSpec = spring(dampingRatio = 0.7F, stiffness = Spring.StiffnessLow),
-    label = "coverCorner",
-  )
+  val cornerPercent = 8F
   val elevation by animateDpAsState(
     targetValue = if (playing) 28.dp else 4.dp,
     animationSpec = spring(stiffness = Spring.StiffnessVeryLow),
