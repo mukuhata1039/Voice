@@ -133,11 +133,6 @@ internal fun BookPlayContent(
             .fillMaxWidth()
             .entrance(entrance, 3),
         ) {
-          Text(
-            text = "章",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
           SeekSection(
             playedTime = viewState.playedTime,
             duration = viewState.duration,
