@@ -100,10 +100,16 @@ class BookPlayViewModel(
 
   private val scope = MainScope(dispatcherProvider)
   private val volumeTitleCache = mutableStateMapOf<String, String?>()
-  // Prefetch volume metadata on opening the playback screen, not on opening its chapter sheet.
-  private val volumeTitlePreload = scope.launch {
-    currentBook()?.let { loadVolumeTitles(it) }
+  // Only the current volume is read on opening playback; the chapter sheet loads the others.
+  private val currentVolumeTitleLoad = scope.launch {
+    currentBook()?.let { book ->
+      val current = book.currentChapter
+      val folder = current.id.volumeFolderName()
+      if (folder != null) loadVolumeTitle(folder, current.id)
+    }
   }
+
+  internal val volumeTitles: Map<String, String?> get() = volumeTitleCache
 
   private val viewEffectChannel = Channel<BookPlayViewEffect>(Channel.UNLIMITED)
   internal val viewEffects: Flow<BookPlayViewEffect> = viewEffectChannel.receiveAsFlow()
@@ -337,10 +343,6 @@ class BookPlayViewModel(
   fun onCurrentChapterClick() {
     scope.launch {
       val book = currentBook() ?: return@launch
-      // Never show placeholder folder names before the embedded titles arrive.
-      // Most opens use the in-memory titles loaded when the playback screen opened.
-      volumeTitlePreload.join()
-      loadVolumeTitles(book)
       val items = buildList {
         var chapterNumber = 0
         var elapsedMs = 0L
@@ -364,20 +366,21 @@ class BookPlayViewModel(
         }
       }
       dialogState.value = BookPlayDialogViewState.SelectChapterDialog(items)
+      // Read metadata only after the sheet exists. Each finished title updates its own header.
+      scope.launch {
+        currentVolumeTitleLoad.join()
+        book.chapters.asSequence()
+          .mapNotNull { chapter -> chapter.id.volumeFolderName()?.let { it to chapter.id } }
+          .distinctBy { it.first }
+          .forEach { (folder, id) -> loadVolumeTitle(folder, id) }
+      }
     }
   }
 
-  private suspend fun loadVolumeTitles(book: Book) {
-    val missingVolumes = book.chapters.mapNotNull { chapter ->
-      val folder = chapter.id.volumeFolderName() ?: return@mapNotNull null
-      folder to chapter.id
-    }.distinctBy { it.first }.filterNot { (folder, _) -> volumeTitleCache.containsKey(folder) }
-    if (missingVolumes.isEmpty()) return
-
-    val titles = withContext(Dispatchers.IO) {
-      missingVolumes.associate { (folder, id) -> folder to id.embeddedTitle(context) }
-    }
-    volumeTitleCache.putAll(titles)
+  private suspend fun loadVolumeTitle(folder: String, id: voice.core.data.ChapterId) {
+    if (volumeTitleCache.containsKey(folder)) return
+    val title = withContext(Dispatchers.IO) { id.embeddedTitle(context) }
+    volumeTitleCache[folder] = title
   }
 
   fun onChapterClick(number: Int) {
