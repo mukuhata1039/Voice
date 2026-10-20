@@ -118,7 +118,7 @@ internal fun SeekSection(
     ) {
       Text(
         text = "章",
-        style = MaterialTheme.typography.labelMedium,
+        style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.width(24.dp),
       )
@@ -395,7 +395,7 @@ internal fun VolumeProgressSection(
     ) {
       Text(
         text = "巻",
-        style = MaterialTheme.typography.labelMedium,
+        style = MaterialTheme.typography.labelLarge,
         color = colors.onSurfaceVariant,
         modifier = Modifier.width(24.dp),
       )
