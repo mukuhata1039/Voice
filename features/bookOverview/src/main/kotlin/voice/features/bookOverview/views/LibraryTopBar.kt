@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.foundation.shape.RectangleShape
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,7 +37,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -106,7 +104,7 @@ internal fun LibraryTopBar(
     AnimatedVisibility(
       visible = showLoading && !showSearch,
       modifier = Modifier
-        .matchParentSize()
+        .fillMaxWidth()
         .wrapContentHeight(Alignment.Bottom),
       enter = fadeIn(),
       exit = fadeOut(),
