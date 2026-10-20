@@ -26,9 +26,18 @@ import com.materialkolor.ktx.animateColorScheme
 @Composable
 fun CoverTheme(
   cover: String?,
+  currentAudioUri: String? = null,
   content: @Composable () -> Unit,
 ) {
-  val seed = rememberCoverSeedColor(cover)
+  val representativeSeed = rememberCoverSeedColor(cover)
+  val colors = LocalCoverSeedColors.current
+  val volumeSeed by produceState<Color?>(initialValue = null, currentAudioUri, colors) {
+    value = currentAudioUri?.let { colors?.cached("embedded:$it") }?.takeIf { it.isSpecified }
+    if (currentAudioUri != null && colors != null && value == null) {
+      value = colors.loadEmbeddedArtwork(currentAudioUri)
+    }
+  }
+  val seed = volumeSeed ?: representativeSeed
   val baseScheme = MaterialTheme.colorScheme
   val targetScheme = if (seed != null) {
     val dark = baseScheme.surface.luminance() < 0.5F
