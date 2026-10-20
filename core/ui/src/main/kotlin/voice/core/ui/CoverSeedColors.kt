@@ -120,7 +120,15 @@ class CoverSeedColors(
         try {
           retriever.setDataSource(application, Uri.parse(audioUri))
           val bytes = retriever.embeddedPicture ?: return@runCatching null
-          val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: return@runCatching null
+          val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+          BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+          var sampleSize = 1
+          while (bounds.outWidth / sampleSize > 128 || bounds.outHeight / sampleSize > 128) {
+            sampleSize *= 2
+          }
+          val bitmap = BitmapFactory.decodeByteArray(
+            bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sampleSize },
+          ) ?: return@runCatching null
           try {
             val scaled = Bitmap.createScaledBitmap(bitmap, 128, 128, true)
             try {
