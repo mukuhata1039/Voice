@@ -54,12 +54,12 @@ internal val CoverShape = RoundedCornerShape(percent = 12)
 internal fun BookCover(
   bookId: BookId,
   cover: String?,
-  volumeAudioUri: String? = null,
   modifier: Modifier = Modifier,
   shape: Shape = CoverShape,
   finished: Boolean = false,
   unavailable: Boolean = false,
   download: DownloadBadge? = null,
+  volumeAudioUri: String? = null,
 ) {
   val context = LocalContext.current
   val embeddedCover by produceState<Bitmap?>(initialValue = null, volumeAudioUri) {
