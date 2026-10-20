@@ -383,6 +383,7 @@ private fun OfflinePill(modifier: Modifier = Modifier) {
 internal fun VolumeProgressSection(
   playedTime: Duration,
   duration: Duration,
+  playbackSpeed: Float,
   modifier: Modifier = Modifier,
 ) {
   val colors = MaterialTheme.colorScheme
@@ -424,7 +425,7 @@ internal fun VolumeProgressSection(
       )
       Spacer(Modifier.weight(1F))
       Text(
-        text = "−" + formatTime((duration - playedTime).inWholeMilliseconds, duration.inWholeMilliseconds),
+        text = "−" + formatTime(((duration - playedTime) / playbackSpeed.coerceAtLeast(0.1F).toDouble()).inWholeMilliseconds),
         style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
         color = colors.onSurfaceVariant,
       )
