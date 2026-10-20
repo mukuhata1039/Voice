@@ -3,7 +3,6 @@
 package voice.features.bookOverview.views
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -16,28 +15,21 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import voice.core.data.BookId
-import voice.core.strings.R
 import voice.core.ui.HoldSplashScreenWhile
 import voice.core.ui.entrance
 import voice.core.ui.rememberEntranceState
 import voice.features.bookOverview.overview.BookOverviewCategory
 import voice.features.bookOverview.overview.BookOverviewLayoutMode
 import voice.features.bookOverview.overview.BookOverviewViewState
-import java.util.Calendar
 
 /**
  * Opening the app keeps the splash screen up until the library is loaded, then the sections float in
@@ -89,15 +81,6 @@ internal fun Library(
       item(span = { GridItemSpan(maxLineSpan) }) {
         PermissionBugCard(onPermissionBugCardClick, Modifier.entrance(entrance, index))
       }
-    }
-    val greetingIndex = entranceIndex()
-    item(key = "greeting", span = { GridItemSpan(maxLineSpan) }, contentType = "greeting") {
-      LibraryGreeting(
-        inProgressCount = inProgress.size,
-        modifier = Modifier
-          .entrance(entrance, greetingIndex)
-          .padding(top = 16.dp, bottom = 20.dp, start = 4.dp),
-      )
     }
     if (hero != null) {
       val index = entranceIndex()
@@ -193,30 +176,3 @@ private const val MAX_ENTRANCE_INDEX = 6
 
 internal const val HERO_KEY = "hero"
 
-@Composable
-private fun LibraryGreeting(
-  inProgressCount: Int,
-  modifier: Modifier = Modifier,
-) {
-  val greeting = remember {
-    when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
-      in 5..11 -> R.string.library_greeting_morning
-      in 12..16 -> R.string.library_greeting_afternoon
-      in 17..21 -> R.string.library_greeting_evening
-      else -> R.string.library_greeting_night
-    }
-  }
-  Column(modifier = modifier) {
-    Text(
-      text = stringResource(greeting),
-      style = MaterialTheme.typography.displaySmallEmphasized,
-    )
-    if (inProgressCount > 0) {
-      Text(
-        text = pluralStringResource(R.plurals.library_header_in_progress, inProgressCount, inProgressCount),
-        style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-  }
-}
