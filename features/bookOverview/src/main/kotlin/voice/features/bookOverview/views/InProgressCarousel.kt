@@ -64,6 +64,7 @@ internal fun InProgressCarousel(
       BookCover(
         bookId = book.id,
         cover = book.cover,
+      volumeAudioUri = book.volumeAudioUri,
         shape = shape,
         unavailable = book.unavailable,
         download = book.download,
