@@ -8,7 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
@@ -36,6 +36,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -68,6 +69,7 @@ import voice.features.bookOverview.overview.BookOverviewViewState
 import voice.navigation.Destination
 import voice.navigation.NavEntryProvider
 import kotlin.uuid.Uuid
+import kotlinx.coroutines.launch
 import voice.core.strings.R as StringsR
 
 @BindingContainer
@@ -127,6 +129,7 @@ internal fun BookOverview(
 ) {
   val scrollBehavior = SearchBarDefaults.enterAlwaysSearchBarScrollBehavior()
   val gridState = rememberLazyGridState()
+  val scrollScope = rememberCoroutineScope()
   Scaffold(
     modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
@@ -153,7 +156,10 @@ internal fun BookOverview(
           horizontalAlignment = Alignment.CenterHorizontally,
           verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-          OpenPlayerButton(onClick = onOpenPlayerClick)
+          OpenPlayerButton(
+            onClick = onOpenPlayerClick,
+            onDoubleClick = { scrollScope.launch { gridState.animateScrollToItem(0) } },
+          )
           PlayButton(
             playing = playButtonState == BookOverviewViewState.PlayButtonState.Playing,
             onClick = onPlayButtonClick,
@@ -186,6 +192,7 @@ internal fun BookOverview(
 @Composable
 private fun OpenPlayerButton(
   onClick: () -> Unit,
+  onDoubleClick: () -> Unit,
 ) {
   // Navigation is independent of playback, so its shape must never morph with play/pause.
   Box(
@@ -193,7 +200,11 @@ private fun OpenPlayerButton(
       .size(64.dp)
       .clip(CircleShape)
       .background(MaterialTheme.colorScheme.primary)
-      .clickable(role = Role.Button, onClick = onClick),
+      .combinedClickable(
+        role = Role.Button,
+        onClick = onClick,
+        onDoubleClick = onDoubleClick,
+      ),
     contentAlignment = Alignment.Center,
   ) {
     Icon(
