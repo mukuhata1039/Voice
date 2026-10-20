@@ -3,8 +3,6 @@
 package voice.features.bookOverview.views
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -25,6 +23,7 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.toShape
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
@@ -44,8 +43,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
-import androidx.graphics.shapes.Morph
-import voice.core.ui.MorphShape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -157,10 +154,7 @@ internal fun BookOverview(
           horizontalAlignment = Alignment.CenterHorizontally,
           verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-          OpenPlayerButton(
-            playing = playButtonState == BookOverviewViewState.PlayButtonState.Playing,
-            onClick = onOpenPlayerClick,
-          )
+          OpenPlayerButton(onClick = onOpenPlayerClick)
           PlayButton(
             playing = playButtonState == BookOverviewViewState.PlayButtonState.Playing,
             onClick = onPlayButtonClick,
@@ -192,24 +186,19 @@ internal fun BookOverview(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun OpenPlayerButton(
-  playing: Boolean,
   onClick: () -> Unit,
 ) {
-  val morph = remember { Morph(MaterialShapes.Cookie9Sided, MaterialShapes.Square) }
-  val morphProgress by animateFloatAsState(
-    targetValue = if (playing) 1F else 0F,
-    label = "openPlayerMorph",
-  )
+  // Navigation is independent of playback, so its shape must never morph with play/pause.
   Box(
     modifier = Modifier
       .size(64.dp)
-      .clip(MorphShape(morph, morphProgress))
+      .clip(MaterialShapes.Cookie9Sided.toShape())
       .background(MaterialTheme.colorScheme.primary)
       .clickable(role = Role.Button, onClick = onClick),
     contentAlignment = Alignment.Center,
   ) {
     Icon(
-      imageVector = VoiceIcons.LibraryBooks,
+      imageVector = VoiceIcons.Headphones,
       contentDescription = "再生画面を開く",
       tint = MaterialTheme.colorScheme.onPrimary,
       modifier = Modifier.size(26.dp),
