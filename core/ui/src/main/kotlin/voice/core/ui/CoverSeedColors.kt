@@ -3,6 +3,10 @@
 package voice.core.ui
 
 import android.app.Application
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
+import android.net.Uri
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -103,6 +107,40 @@ class CoverSeedColors(
       }
     }
     return color
+  }
+
+  /** Palette seed for artwork embedded in the currently playing audio file. */
+  suspend fun loadEmbeddedArtwork(audioUri: String): Color? {
+    val key = "embedded:$audioUri"
+    restore()
+    memory[key]?.let { return it.takeIf(Color::isSpecified) }
+    val color = withContext(Dispatchers.IO) {
+      runCatching {
+        val retriever = MediaMetadataRetriever()
+        try {
+          retriever.setDataSource(application, Uri.parse(audioUri))
+          val bytes = retriever.embeddedPicture ?: return@runCatching null
+          val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: return@runCatching null
+          try {
+            val scaled = Bitmap.createScaledBitmap(bitmap, 128, 128, true)
+            try {
+              scaled.asImageBitmap().themeColorOrNull()
+            } finally {
+              if (scaled !== bitmap) scaled.recycle()
+            }
+          } finally {
+            bitmap.recycle()
+          }
+        } finally {
+          retriever.release()
+        }
+      }.getOrNull()
+    } ?: Color.Unspecified
+    memory[key] = color
+    scope.launch {
+      persist { stored -> stored + (key to if (color.isSpecified) color.toArgb() else NO_COLOR) }
+    }
+    return color.takeIf { it.isSpecified }
   }
 
   private suspend fun persist(transform: (Map<String, Int>) -> Map<String, Int>) {
