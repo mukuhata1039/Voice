@@ -37,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -70,6 +71,7 @@ import voice.navigation.Destination
 import voice.navigation.NavEntryProvider
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import voice.core.strings.R as StringsR
 
 @BindingContainer
@@ -130,6 +132,18 @@ internal fun BookOverview(
   val scrollBehavior = SearchBarDefaults.enterAlwaysSearchBarScrollBehavior()
   val gridState = rememberLazyGridState()
   val scrollScope = rememberCoroutineScope()
+  // Grid position and the collapsible search bar have independent scroll states.
+  // Returning to the first item must also restore the bar's fully expanded appearance.
+  LaunchedEffect(gridState, scrollBehavior) {
+    snapshotFlow {
+      gridState.firstVisibleItemIndex == 0 && gridState.firstVisibleItemScrollOffset == 0
+    }.distinctUntilChanged().collect { atTop ->
+      if (atTop) {
+        scrollBehavior.scrollState.scrollOffset = 0f
+        scrollBehavior.scrollState.contentOffset = 0f
+      }
+    }
+  }
   Scaffold(
     modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
@@ -161,6 +175,8 @@ internal fun BookOverview(
             onDoubleClick = {
               scrollScope.launch {
                 gridState.animateScrollToItem(0)
+                scrollBehavior.scrollState.scrollOffset = 0f
+                scrollBehavior.scrollState.contentOffset = 0f
               }
             },
           )
