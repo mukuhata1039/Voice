@@ -27,7 +27,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -43,7 +42,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -127,18 +125,17 @@ internal fun BookOverview(
   onPermissionBugCardClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val scrollBehavior = SearchBarDefaults.enterAlwaysSearchBarScrollBehavior()
   val gridState = rememberLazyGridState()
   val scrollScope = rememberCoroutineScope()
   Scaffold(
-    modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+    modifier = modifier,
     topBar = {
       LibraryTopBar(
         showSearch = viewState.showSearchIcon,
         showFolderPickerIcon = viewState.showFolderPickerIcon,
         showAddBookHint = viewState.showAddBookHint,
         isLoading = viewState.isLoading,
-        scrollBehavior = scrollBehavior,
+        scrollBehavior = null,
         onSearchClick = onSearchClick,
         onBookFolderClick = onBookFolderClick,
         onSettingsClick = onSettingsClick,
@@ -161,10 +158,6 @@ internal fun BookOverview(
             onDoubleClick = {
               scrollScope.launch {
                 gridState.animateScrollToItem(0)
-                // The search bar has its own scroll offset; scrolling the grid to item 0
-                // does not automatically reveal a collapsed AppBarWithSearch.
-                scrollBehavior.scrollState.scrollOffset = 0f
-                scrollBehavior.scrollState.contentOffset = 0f
               }
             },
           )
