@@ -65,7 +65,7 @@ fun BookPlayScreen(bookId: BookId) {
       }
     }
   }
-  CoverTheme(cover = viewState.cover) {
+  CoverTheme(cover = viewState.cover, currentAudioUri = viewState.currentAudioUri) {
     BookPlayView(
       viewState,
       bookId = bookId,
