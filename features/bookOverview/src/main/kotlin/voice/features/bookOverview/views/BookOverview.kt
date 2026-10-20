@@ -158,7 +158,15 @@ internal fun BookOverview(
         ) {
           OpenPlayerButton(
             onClick = onOpenPlayerClick,
-            onDoubleClick = { scrollScope.launch { gridState.animateScrollToItem(0) } },
+            onDoubleClick = {
+              scrollScope.launch {
+                gridState.animateScrollToItem(0)
+                // The search bar has its own scroll offset; scrolling the grid to item 0
+                // does not automatically reveal a collapsed AppBarWithSearch.
+                scrollBehavior.scrollState.scrollOffset = 0f
+                scrollBehavior.scrollState.contentOffset = 0f
+              }
+            },
           )
           PlayButton(
             playing = playButtonState == BookOverviewViewState.PlayButtonState.Playing,
