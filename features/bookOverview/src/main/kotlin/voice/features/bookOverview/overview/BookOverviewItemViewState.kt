@@ -15,6 +15,8 @@ data class BookOverviewItemViewState(
   val name: String,
   val author: String?,
   val cover: String?,
+  /** Audio file used to show the current volume's embedded cover in the library. */
+  val volumeAudioUri: String? = null,
   val progress: Float,
   val id: BookId,
   val remainingTime: String,
@@ -46,6 +48,7 @@ internal fun Book.toItemViewState(
   name = libraryDisplayName(),
   author = content.metadata.author,
   cover = content.coverUrl,
+  volumeAudioUri = if (!id.isRemote && chapters.size > 1) currentChapter.id.value else null,
   id = id,
   progress = progress(),
   remainingTime = formatTime(duration - position),
