@@ -7,6 +7,12 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.foundation.shape.RectangleShape
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.material3.AppBarWithSearch
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -23,10 +28,8 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBarDefaults
-import androidx.compose.material3.SearchBarScrollBehavior
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,6 +43,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.delay
 import voice.core.ui.VoiceTheme
 import voice.core.ui.icons.VoiceIcons
@@ -53,7 +57,7 @@ internal fun LibraryTopBar(
   showFolderPickerIcon: Boolean,
   showAddBookHint: Boolean,
   isLoading: Boolean,
-  scrollBehavior: SearchBarScrollBehavior?,
+  hiddenHeight: Dp,
   onSearchClick: () -> Unit,
   onBookFolderClick: () -> Unit,
   onSettingsClick: () -> Unit,
@@ -66,31 +70,37 @@ internal fun LibraryTopBar(
     }
     showLoading = isLoading
   }
-  Box(modifier) {
-    AppBarWithSearch(
-      state = rememberSearchBarState(),
-      inputField = {
-        AnimatedVisibility(
-          visible = showSearch,
-          enter = fadeIn(),
-          exit = fadeOut(),
-        ) {
-          LibrarySearchPill(loading = showLoading, onClick = onSearchClick)
+  Column(modifier = modifier.statusBarsPadding()) {
+    Box(
+      modifier = Modifier
+        .fillMaxWidth()
+        .height((72.dp - hiddenHeight).coerceAtLeast(0.dp))
+        .clipToBounds(),
+    ) {
+      Row(
+        modifier = Modifier
+          .offset(y = -hiddenHeight)
+          .fillMaxWidth()
+          .height(72.dp)
+          .padding(horizontal = 8.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+      ) {
+        if (showSearch) {
+          LibrarySearchPill(
+            loading = showLoading,
+            onClick = onSearchClick,
+            modifier = Modifier.weight(1f),
+          )
+        } else {
+          Spacer(Modifier.weight(1f))
         }
-      },
-      actions = {
         if (showFolderPickerIcon) {
           BookFolderIcon(withHint = showAddBookHint, onClick = onBookFolderClick)
         }
         SettingsIcon(onSettingsClick)
-      },
-      // the pill draws its own container, so it can grow into the search field
-      colors = SearchBarDefaults.appBarWithSearchColors(
-        searchBarColors = SearchBarDefaults.colors(containerColor = Color.Transparent),
-        scrolledSearchBarContainerColor = Color.Transparent,
-      ),
-      scrollBehavior = scrollBehavior,
-    )
+      }
+    }
     // without books there's no pill to show the scan in. Drawn over the bar's bottom edge so it
     // doesn't push the library down.
     AnimatedVisibility(
@@ -154,7 +164,7 @@ private fun LibraryTopBarPreview() {
       showFolderPickerIcon = true,
       showAddBookHint = false,
       isLoading = false,
-      scrollBehavior = null,
+      hiddenHeight = 0.dp,
       onSearchClick = {},
       onBookFolderClick = {},
       onSettingsClick = {},
