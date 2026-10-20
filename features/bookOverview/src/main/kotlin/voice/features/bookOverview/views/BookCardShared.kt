@@ -50,7 +50,8 @@ import voice.core.strings.R as StringsR
 import voice.core.ui.R as UiR
 
 /** Percentage based so covers keep their look while shared element transitions resize them. */
-internal val CoverShape = RoundedCornerShape(percent = 12)
+// Match the playback cover so shared-element opening and closing keeps one corner radius.
+internal val CoverShape = RoundedCornerShape(percent = 8)
 
 @Composable
 internal fun BookCover(
