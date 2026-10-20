@@ -47,7 +47,7 @@ internal fun ContinueListeningCard(
   onPlayClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  CoverTheme(cover = book.cover) {
+  CoverTheme(cover = book.cover, currentAudioUri = book.volumeAudioUri) {
     val colors = MaterialTheme.colorScheme
     val percentFormat = remember { NumberFormat.getPercentInstance() }
     // Dark containers can be bright for warm covers, so the tint is kept subtle there. Text and
@@ -72,6 +72,7 @@ internal fun ContinueListeningCard(
             BookCover(
               bookId = book.id,
               cover = book.cover,
+      volumeAudioUri = book.volumeAudioUri,
               unavailable = book.unavailable,
               download = book.download,
               modifier = Modifier.size(112.dp),
