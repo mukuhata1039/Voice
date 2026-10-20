@@ -84,8 +84,9 @@ internal fun PlaybackCover(
 ) {
   val scope = rememberCoroutineScope()
   val context = LocalContext.current
-  // Only the playback screen uses per-file artwork; library covers are unchanged.
-  val volumeBitmap by produceState<Bitmap?>(initialValue = null, key1 = currentAudioUri) {
+  // Keep the volume artwork in place while loading; never flash the representative cover first.
+  var artworkResolved by remember(currentAudioUri) { mutableStateOf(currentAudioUri == null || volumeCoverCache.get(currentAudioUri) != null) }
+  val volumeBitmap by produceState<Bitmap?>(initialValue = currentAudioUri?.let { volumeCoverCache.get(it) }, key1 = currentAudioUri) {
     value = if (currentAudioUri == null) null else withContext(Dispatchers.IO) {
       synchronized(volumeCoverCache) {
         volumeCoverCache.get(currentAudioUri)
@@ -103,6 +104,7 @@ internal fun PlaybackCover(
         synchronized(volumeCoverCache) { volumeCoverCache.put(currentAudioUri, bitmap) }
       }
     }
+    artworkResolved = true
   }
   val haptics = LocalHapticFeedback.current
   val scale by animateFloatAsState(
@@ -206,6 +208,9 @@ internal fun PlaybackCover(
         contentScale = ContentScale.Crop,
         contentDescription = stringResource(id = StringsR.string.cover_title),
       )
+    } else if (currentAudioUri != null && !artworkResolved) {
+      // No mismatched first-volume cover during the library-to-player transition.
+      Box(modifier = imageModifier.background(MaterialTheme.colorScheme.surfaceContainerHighest))
     } else {
       AsyncImage(
         modifier = imageModifier,
