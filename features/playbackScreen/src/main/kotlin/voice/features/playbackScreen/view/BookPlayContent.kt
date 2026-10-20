@@ -4,6 +4,7 @@ package voice.features.playbackScreen.view
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -29,6 +30,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -367,21 +372,37 @@ private fun TitleBlock(
   modifier: Modifier = Modifier,
 ) {
   Column(modifier = modifier) {
-    Text(
-      modifier = Modifier.basicMarquee(),
+    RestartableMarqueeText(
       text = title,
       style = MaterialTheme.typography.headlineSmallEmphasized,
-      maxLines = 1,
     )
     if (author != null) {
-      Text(
-        modifier = Modifier.basicMarquee(),
+      RestartableMarqueeText(
         text = author,
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1,
       )
     }
+  }
+}
+
+@Composable
+private fun RestartableMarqueeText(
+  text: String,
+  style: androidx.compose.ui.text.TextStyle,
+  color: Color = Color.Unspecified,
+) {
+  var restart by remember(text) { mutableIntStateOf(0) }
+  key(restart) {
+    Text(
+      modifier = Modifier
+        .clickable { restart++ }
+        .basicMarquee(),
+      text = text,
+      style = style,
+      color = color,
+      maxLines = 1,
+    )
   }
 }
 
