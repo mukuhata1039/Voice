@@ -125,7 +125,7 @@ fun BookmarkScreen(
     }
   }
   if (viewState == null) return
-  CoverTheme(cover = viewState.cover) {
+  CoverTheme(cover = viewState.cover, currentAudioUri = viewState.currentAudioUri) {
     BookmarkScreen(
       viewState = viewState,
       historyViewState = historyViewState,
