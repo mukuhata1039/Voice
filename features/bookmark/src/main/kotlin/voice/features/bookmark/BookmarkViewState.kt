@@ -9,7 +9,6 @@ internal data class BookmarkViewState(
   val bookTitle: String,
   val bookAuthor: String?,
   val cover: String?,
-  val currentAudioUri: String?,
   val playing: Boolean,
   val sleepTimerActive: Boolean,
   val bookBar: BookBarViewState?,
@@ -20,6 +19,7 @@ internal data class BookmarkViewState(
   val totalCount: Int,
   val editor: BookmarkEditorViewState?,
   val tab: BookmarkTab,
+  val currentAudioUri: String? = null,
 )
 
 internal enum class BookmarkTab {
