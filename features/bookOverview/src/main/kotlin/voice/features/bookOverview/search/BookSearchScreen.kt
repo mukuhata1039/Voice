@@ -215,6 +215,7 @@ internal fun BookSearch(
             viewState = state,
             contentPadding = contentPadding,
             listener = listener,
+            onTabSelected = { keyboard?.hide() },
           )
           is BookSearchViewState.Results -> SearchResults(
             viewState = state,
