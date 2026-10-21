@@ -132,6 +132,7 @@ class BookmarkViewModel(
       bookTitle = book.content.name,
       bookAuthor = book.content.metadata.author,
       cover = book.content.coverUrl,
+      currentAudioUri = book.currentChapter.id.value,
       playing = livePlaybackState?.isPlaying ?: (playState == PlayStateManager.PlayState.Playing),
       sleepTimerActive = sleepTimerState.enabled,
       bookBar = bookBar(index, visible, book.content.playbackSpeed),
