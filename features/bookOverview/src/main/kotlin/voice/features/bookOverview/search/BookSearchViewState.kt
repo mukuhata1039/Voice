@@ -12,6 +12,9 @@ sealed interface BookSearchViewState {
   data class Idle(
     val recentSearches: List<String>,
     val browse: Browse?,
+    val folders: List<BrowseFolder> = emptyList(),
+    val selectedFolderUri: String? = null,
+    val folderBooks: List<SearchResultViewState> = emptyList(),
   ) : BookSearchViewState
 
   data class Results(
@@ -25,6 +28,8 @@ sealed interface BookSearchViewState {
     val query: String,
     val filtered: Boolean,
   ) : BookSearchViewState
+
+  data class BrowseFolder(val uri: String, val name: String)
 
   data class Browse(
     val categories: List<BrowseCategory>,
