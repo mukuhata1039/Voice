@@ -31,8 +31,11 @@ fun CoverTheme(
 ) {
   val representativeSeed = rememberCoverSeedColor(cover)
   val colors = LocalCoverSeedColors.current
-  val volumeSeed by produceState<Color?>(initialValue = null, currentAudioUri, colors) {
-    value = currentAudioUri?.let { colors?.cached("embedded:$it") }?.takeIf { it.isSpecified }
+  // Read the already cached volume color during composition, before the first frame.
+  // Starting at null would briefly show the representative (first-volume) cover color.
+  val cachedVolumeSeed = currentAudioUri?.let { colors?.cached("embedded:$it") }?.takeIf { it.isSpecified }
+  val volumeSeed by produceState<Color?>(initialValue = cachedVolumeSeed, currentAudioUri, colors) {
+    value = cachedVolumeSeed
     if (currentAudioUri != null && colors != null && value == null) {
       value = colors.loadEmbeddedArtwork(currentAudioUri)
     }
