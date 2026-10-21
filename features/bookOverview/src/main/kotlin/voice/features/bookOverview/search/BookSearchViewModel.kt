@@ -143,7 +143,7 @@ class BookSearchViewModel(
             SearchResultViewState(
               id = book.id,
               title = HighlightedText(item.name),
-              author = item.author?.let(::HighlightedText),
+              author = item.author?.let { HighlightedText(it) },
               cover = item.cover,
               category = book.category,
               progress = item.progress,
