@@ -83,10 +83,50 @@ internal fun IdleSearch(
       }
     }
     val browse = viewState.browse
-    if (browse != null) {
+    if (browse != null || viewState.folders.isNotEmpty()) {
       item(key = "browseHeader", contentType = "header") {
-        SectionHeader(title = stringResource(StringsR.string.library_search_browse_title))
+        SectionHeader(
+          title = stringResource(StringsR.string.library_search_browse_title),
+          action = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+              viewState.folders.forEach { folder ->
+                TextButton(onClick = { listener.onBrowseFolderClick(folder.uri) }) {
+                  Text(
+                    text = folder.name,
+                    color = if (viewState.selectedFolderUri == folder.uri) MaterialTheme.colorScheme.primary
+                      else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                  )
+                }
+              }
+            }
+          },
+        )
       }
+      if (viewState.selectedFolderUri != null) {
+        viewState.folderBooks.forEachIndexed { index, book ->
+          item(key = "folder-${book.id.value}", contentType = "folderBook") {
+            if (index == 0) {
+              TopResult(
+                result = book,
+                playing = false,
+                onClick = { listener.onBookClick(book.id) },
+                onLongClick = { listener.onBookLongClick(book.id) },
+                onPlayClick = { listener.onPlayClick(book.id) },
+                modifier = Modifier.padding(bottom = 10.dp),
+              )
+            } else {
+              SearchResultRow(
+                result = book,
+                shape = segmentedShape(index - 1, viewState.folderBooks.size - 1),
+                onClick = { listener.onBookClick(book.id) },
+                onLongClick = { listener.onBookLongClick(book.id) },
+              )
+            }
+          }
+        }
+      } else if (browse != null) {
       item(key = "browseTabs", contentType = "browseTabs") {
         BrowseTabs(
           categories = browse.categories,
@@ -106,6 +146,7 @@ internal fun IdleSearch(
           shape = segmentedShape(index, browse.entries.size),
           onClick = { listener.onBrowseEntryClick(browse.selectedCategory, entry.name) },
         )
+      }
       }
     }
   }
