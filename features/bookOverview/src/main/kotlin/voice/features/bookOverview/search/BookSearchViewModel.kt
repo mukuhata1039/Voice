@@ -1,5 +1,8 @@
 package voice.features.bookOverview.search
 
+import android.net.Uri
+import android.provider.DocumentsContract
+
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.Composable
@@ -30,6 +33,7 @@ import voice.core.common.comparator.NaturalOrderComparator
 import voice.core.data.Book
 import voice.core.data.BookContent
 import voice.core.data.BookId
+import voice.core.data.folders.AudiobookFolders
 import voice.core.data.KioskModeDemoData
 import voice.core.data.repo.BookRepository
 import voice.core.data.repo.RecentBookSearchRepo
@@ -57,6 +61,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Inject
 class BookSearchViewModel(
   private val repo: BookRepository,
+  private val audiobookFolders: AudiobookFolders,
   private val search: BookSearch,
   private val recentBookSearchRepo: RecentBookSearchRepo,
   private val navigator: Navigator,
@@ -77,17 +82,20 @@ class BookSearchViewModel(
   val query = TextFieldState()
   private var selectedFilter by mutableStateOf<BookSearchField?>(null)
   private var selectedBrowseCategory by mutableStateOf<BrowseCategory?>(null)
+  private var selectedFolderUri by mutableStateOf<String?>(null)
 
   /**
    * Navigation disposes the search while the player is open, and this view model with it. The saved state brings back
    * what was searched.
    */
   internal val saver: Saver<BookSearchViewModel, Any> = listSaver<BookSearchViewModel, String?>(
-    save = { listOf(query.text.toString(), selectedFilter?.name, selectedBrowseCategory?.name) },
-    restore = { (text, filter, browseCategory) ->
+    save = { listOf(query.text.toString(), selectedFilter?.name, selectedBrowseCategory?.name, selectedFolderUri) },
+    restore = { saved ->
+      val (text, filter, browseCategory) = saved
       query.setTextAndPlaceCursorAtEnd(text.orEmpty())
       selectedFilter = filter?.let(BookSearchField::valueOf)
       selectedBrowseCategory = browseCategory?.let(BrowseCategory::valueOf)
+      selectedFolderUri = saved.getOrNull(3)
       this
     },
   )
@@ -111,14 +119,45 @@ class BookSearchViewModel(
       ?.takeIf { queryText.isNotEmpty() }
 
     if (results == null) {
-      val books = remember { repo.flow() }
-        .collectAsState(initial = null).value
-      val browse = remember(books, selectedBrowseCategory) {
-        books?.let(::browse)
-      }
+      val books = remember { repo.flow() }.collectAsState(initial = null).value
+      val registered = remember { audiobookFolders.all() }.collectAsState(initial = emptyMap()).value
+      val folders = registered.values.flatten()
+        .mapNotNull { folder ->
+          val name = folder.documentFile.name?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+          BookSearchViewState.BrowseFolder(folder.uri.toString(), name)
+        }
+        .distinctBy { it.uri }
+      val selectedFolder = folders.firstOrNull { it.uri == selectedFolderUri }
+      val browse = remember(books, selectedBrowseCategory) { books?.let(::browse) }
+      val folderBooks = if (selectedFolder != null && books != null) {
+        val folderId = runCatching { DocumentsContract.getTreeDocumentId(Uri.parse(selectedFolder.uri)) }.getOrNull()
+        if (folderId == null) emptyList() else books
+          .filter { book ->
+            book.chapters.any { chapter ->
+              val id = runCatching { DocumentsContract.getDocumentId(Uri.parse(chapter.id.value)) }.getOrNull()
+              id != null && (id == folderId || id.startsWith("$folderId/"))
+            }
+          }
+          .map { book ->
+            val item = book.toItemViewState()
+            SearchResultViewState(
+              id = book.id,
+              title = HighlightedText(item.name),
+              author = item.author?.let(::HighlightedText),
+              cover = item.cover,
+              category = book.category,
+              progress = item.progress,
+              remainingTime = item.remainingTime,
+              matchTag = null,
+            )
+          }
+      } else emptyList()
       return BookSearchViewState.Idle(
         recentSearches = recentSearches,
         browse = browse,
+        folders = folders,
+        selectedFolderUri = selectedFolder?.uri,
+        folderBooks = folderBooks,
       )
     }
 
@@ -248,6 +287,11 @@ class BookSearchViewModel(
 
   fun onBrowseCategoryClick(category: BrowseCategory) {
     selectedBrowseCategory = category
+    selectedFolderUri = null
+  }
+
+  fun onBrowseFolderClick(uri: String) {
+    selectedFolderUri = if (selectedFolderUri == uri) null else uri
   }
 
   fun onBrowseEntryClick(
