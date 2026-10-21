@@ -97,6 +97,7 @@ fun BookSearchScreen(modifier: Modifier = Modifier) {
       override fun onRemoveRecentSearch(recentSearch: String) = viewModel.onRemoveRecentSearch(recentSearch)
       override fun onClearRecentSearches() = viewModel.onClearRecentSearches()
       override fun onBrowseCategoryClick(category: BrowseCategory) = viewModel.onBrowseCategoryClick(category)
+      override fun onBrowseFolderClick(uri: String) = viewModel.onBrowseFolderClick(uri)
       override fun onBrowseEntryClick(
         category: BrowseCategory,
         name: String,
@@ -121,6 +122,7 @@ internal interface BookSearchListener {
   fun onRemoveRecentSearch(recentSearch: String)
   fun onClearRecentSearches()
   fun onBrowseCategoryClick(category: BrowseCategory)
+  fun onBrowseFolderClick(uri: String)
   fun onBrowseEntryClick(
     category: BrowseCategory,
     name: String,
@@ -141,6 +143,7 @@ internal interface BookSearchListener {
       override fun onRemoveRecentSearch(recentSearch: String) {}
       override fun onClearRecentSearches() {}
       override fun onBrowseCategoryClick(category: BrowseCategory) {}
+      override fun onBrowseFolderClick(uri: String) {}
       override fun onBrowseEntryClick(
         category: BrowseCategory,
         name: String,
