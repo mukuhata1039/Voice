@@ -56,6 +56,7 @@ internal fun IdleSearch(
   contentPadding: PaddingValues,
   listener: BookSearchListener,
   modifier: Modifier = Modifier,
+  onTabSelected: () -> Unit = {},
 ) {
   LazyColumn(
     modifier = modifier,
@@ -85,24 +86,36 @@ internal fun IdleSearch(
     val browse = viewState.browse
     if (browse != null || viewState.folders.isNotEmpty()) {
       item(key = "browseHeader", contentType = "header") {
-        SectionHeader(
-          title = stringResource(StringsR.string.library_search_browse_title),
-          action = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-              viewState.folders.forEach { folder ->
-                TextButton(onClick = { listener.onBrowseFolderClick(folder.uri) }) {
-                  Text(
-                    text = folder.name,
-                    color = if (viewState.selectedFolderUri == folder.uri) MaterialTheme.colorScheme.primary
-                      else MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                  )
-                }
-              }
+        Row(
+          modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp),
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+        ) {
+          Text(
+            text = stringResource(StringsR.string.library_search_browse_title),
+            modifier = Modifier.weight(1F).padding(start = 8.dp),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+          viewState.folders.forEachIndexed { index, folder ->
+            ToggleButton(
+              checked = viewState.selectedFolderUri == folder.uri,
+              onCheckedChange = {
+                onTabSelected()
+                listener.onBrowseFolderClick(folder.uri)
+              },
+              modifier = Modifier.weight(1F).semantics { role = Role.RadioButton },
+              shapes = when (index) {
+                0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                viewState.folders.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+              },
+              contentPadding = PaddingValues(horizontal = 4.dp),
+            ) {
+              Text(folder.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-          },
-        )
+          }
+        }
       }
       if (viewState.selectedFolderUri != null) {
         viewState.folderBooks.forEachIndexed { index, book ->
@@ -131,7 +144,10 @@ internal fun IdleSearch(
         BrowseTabs(
           categories = browse.categories,
           selected = browse.selectedCategory,
-          onClick = listener::onBrowseCategoryClick,
+          onClick = { category ->
+            onTabSelected()
+            listener.onBrowseCategoryClick(category)
+          },
           modifier = Modifier.padding(bottom = 12.dp),
         )
       }
