@@ -146,7 +146,7 @@ private fun Filters(
 }
 
 @Composable
-private fun TopResult(
+internal fun TopResult(
   result: SearchResultViewState,
   playing: Boolean,
   onClick: () -> Unit,
@@ -225,7 +225,7 @@ private fun TopResult(
 }
 
 @Composable
-private fun SearchResultRow(
+internal fun SearchResultRow(
   result: SearchResultViewState,
   shape: Shape,
   onClick: () -> Unit,
