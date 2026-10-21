@@ -9,6 +9,7 @@ internal data class BookmarkViewState(
   val bookTitle: String,
   val bookAuthor: String?,
   val cover: String?,
+  val currentAudioUri: String?,
   val playing: Boolean,
   val sleepTimerActive: Boolean,
   val bookBar: BookBarViewState?,
